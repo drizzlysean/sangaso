@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="description" content="Sangaso — Find trusted local service providers. Book cleaners, electricians, plumbers and more in minutes.">
+  <meta name="theme-color" content="#FF7043">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sangaso">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+  <title>Sangaso — Find Trusted Local Services</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    body{
+      background:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ── overlay ─────────────────────────────────────── */
+    #sp{
+      position:fixed;inset:0;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:#fff;
+      z-index:9999;
+      transition:opacity .4s ease, visibility .4s ease;
+    }
+    #sp.out{opacity:0;visibility:hidden;}
+
+    /* ── logo mark ───────────────────────────────────── */
+    #logo{
+      width:72px;height:72px;
+      background:#FF7043;
+      border-radius:20px;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 24px rgba(255,112,67,.25);
+      animation:pop .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes pop{
+      from{transform:scale(.6);opacity:0}
+      to{transform:scale(1);opacity:1}
+    }
+
+    /* ── wordmark ────────────────────────────────────── */
+    #wordmark{
+      margin-top:18px;
+      font-size:22px;font-weight:700;
+      color:#0f0f0f;letter-spacing:-.4px;
+      animation:rise .45s .15s ease both;
+    }
+    #tagline{
+      margin-top:6px;
+      font-size:13px;color:#9b9b9b;font-weight:400;
+      animation:rise .45s .25s ease both;
+    }
+    @keyframes rise{
+      from{transform:translateY(8px);opacity:0}
+      to{transform:translateY(0);opacity:1}
+    }
+
+    /* ── progress track ──────────────────────────────── */
+    #track{
+      width:160px;height:3px;
+      background:#f0f0f0;border-radius:2px;
+      overflow:hidden;
+      margin-top:36px;
+      animation:rise .4s .35s ease both;
+    }
+    #bar{
+      height:100%;width:0;
+      background:#FF7043;
+      border-radius:2px;
+      transition:width .35s ease;
+    }
+
+    /* ── status text ─────────────────────────────────── */
+    #msg{
+      margin-top:14px;
+      font-size:12px;color:#c0c0c0;
+      animation:rise .4s .4s ease both;
+      height:16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sp">
+    <div id="logo">
+      <!-- Handshake / service mark -->
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 13l4-4 4 4-4 4-4-4z" fill="rgba(255,255,255,.35)"/>
+        <path d="M13 5l4-4 4 4-4 4-4-4z" fill="rgba(255,255,255,.35)"/>
+        <path d="M10.5 10.5l15 15" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="10.5" cy="10.5" r="3.5" fill="white"/>
+        <circle cx="25.5" cy="25.5" r="3.5" fill="white"/>
+        <path d="M18 8c5.523 0 10 4.477 10 10s-4.477 10-10 10S8 23.523 8 18" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div id="wordmark">Sangaso</div>
+    <div id="tagline">Find trusted services near you</div>
+
+    <div id="track"><div id="bar"></div></div>
+    <div id="msg">Starting up…</div>
+  </div>
+
+  <script>
+    (function(){
+      var bar   = document.getElementById('bar');
+      var msg   = document.getElementById('msg');
+      var sp    = document.getElementById('sp');
+      var pct   = 0;
+      var done  = false;
+
+      var steps = [
+        {p:15, t:200,  m:'Loading resources…'},
+        {p:35, t:600,  m:'Initialising app…'},
+        {p:55, t:1200, m:'Connecting services…'},
+        {p:72, t:2000, m:'Almost there…'},
+        {p:85, t:3200, m:'Finishing up…'},
+      ];
+
+      function set(p, m){
+        pct = p;
+        bar.style.width = p + '%';
+        if(m) msg.textContent = m;
+      }
+
+      // Timed progress steps — keeps the bar moving even on slow connections
+      steps.forEach(function(s){
+        setTimeout(function(){ if(!done) set(s.p, s.m); }, s.t);
+      });
+
+      // Flutter fires this when the first frame is painted
+      window.addEventListener('flutter-first-frame', function(){
+        done = true;
+        set(100, 'Ready');
+        // Short pause so the bar visibly hits 100%, then fade out
+        setTimeout(function(){
+          sp.classList.add('out');
+          setTimeout(function(){ sp.remove(); }, 420);
+        }, 300);
+      });
+
+      // Flutter loading progress hook (available in Flutter 3.7+)
+      window._flutter = window._flutter || {};
+      var orig = window._flutter.loader;
+      window._flutter = {
+        loader: {
+          loadEntrypoint: function(opts){
+            if(orig && orig.loadEntrypoint) return orig.loadEntrypoint(opts);
+          }
+        }
+      };
+
+      // Fallback: if flutter-first-frame never fires after 12s, hide anyway
+      setTimeout(function(){
+        if(!done){ done=true; set(100,''); sp.classList.add('out'); }
+      }, 12000);
+    })();
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

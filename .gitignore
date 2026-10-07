@@ -1,0 +1,129 @@
+# Miscellaneous
+/APK_AAD/
+/APK_AAD/signing/
+*.aab
+~$*.docx
+~$*
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+# Additional Android patterns
+*.keystore
+*.jks
+android/key.properties
+local.properties
+*.apk
+*.ap_
+*.dex
+google-services.json
+app/google-services.json
+.vscode/
+logs/
+*.log
+
+# Additional Android patterns
+*.keystore
+*.jks
+local.properties
+
+# Generated files
+*.apk
+*.ap_
+*.dex
+
+# Firebase/Google services
+google-services.json
+app/google-services.json
+
+# Crashlytics
+com_crashlytics_export_strings.xml
+crashlytics.properties
+
+# Build folders
+/android/build/
+/ios/build/
+
+# VS Code (uncomment if needed)
+.vscode/
+
+# Temp files
+*.tmp
+*.temp
+
+# Logs
+logs/
+*.log
+
+# Additional Android patterns
+*.keystore
+*.jks
+local.properties
+
+# Generated files
+*.apk
+*.ap_
+*.dex
+
+# Firebase/Google services
+google-services.json
+app/google-services.json
+
+# Crashlytics
+com_crashlytics_export_strings.xml
+crashlytics.properties
+
+# Build folders
+/android/build/
+/ios/build/
+
+# VS Code (uncomment if needed)
+.vscode/
+
+# Temp files
+*.tmp
+*.temp
+
+# Logs
+logs/
+*.log
