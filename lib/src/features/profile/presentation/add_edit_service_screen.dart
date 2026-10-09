@@ -580,7 +580,7 @@ class _AddEditServiceScreenState extends State<AddEditServiceScreen> {
                             border: Border.all(color: borderColor),
                           ),
                           child: DropdownButtonFormField<String>(
-                            initialValue: _selectedCategory,
+                            value: _selectedCategory,
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               prefixIcon: Icon(

@@ -96,7 +96,7 @@ class AppTheme {
         labelStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.text2),
         errorStyle: GoogleFonts.inter(fontSize: 11, color: AppColors.error),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
