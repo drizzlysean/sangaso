@@ -2,6 +2,11 @@ name: Build APK
 
 on:
   workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Android versionCode override (optional, defaults to pubspec +N)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -9,19 +14,60 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'  # Dart 3.5.x; >=3.19.2 required by google_fonts ^6.2.1
-          
+          flutter-version: '3.38.5'  # targetSdk 36 (Play requirement since Aug 2026), 16 KB page-size support
+
       - name: Build APK
         run: |
           flutter pub get
           flutter build apk --debug
-          
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: sangaso-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+
+      - name: Setup signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build release AAB
+        run: |
+          flutter pub get
+          if [ -n "${{ inputs.build_number }}" ]; then
+            flutter build appbundle --release --build-number="${{ inputs.build_number }}"
+          else
+            flutter build appbundle --release
+          fi
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: sangaso-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
