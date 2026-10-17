@@ -41,9 +41,22 @@ dev_dependencies:
   firebase_auth_mocks: ^0.13.0
   fake_cloud_firestore: ^2.5.0
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
+  ios: false
   image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "assets/images/app_icon_background.png"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+    background_color: "#BEBEBE"
+    theme_color: "#CF4F23"
+  windows:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+    icon_size: 256
 
 flutter:
   uses-material-design: true

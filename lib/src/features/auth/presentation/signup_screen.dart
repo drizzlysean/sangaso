@@ -63,6 +63,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const SizedBox(height: 8),
+            const BrandLogoMark(size: 44),
+            const SizedBox(height: 14),
             const SectionEyebrow('JOIN SANGASO'),
             const SizedBox(height: 10),
             const DisplayHeading(plain: 'Create account', accentItalic: 'and start.', size: 34),

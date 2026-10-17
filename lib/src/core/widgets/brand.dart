@@ -126,29 +126,27 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-/// Brand logo mark: charcoal rounded square with an orange "S".
+/// Brand logo mark: the authentic Sangaso mark recovered from the
+/// website (orange brushstroke S with the green dot on its gray card).
 class BrandLogoMark extends StatelessWidget {
   const BrandLogoMark({super.key, this.size = 52, this.dark = true});
 
   final double size;
+
+  /// Retained for call-site compatibility; the authentic logo asset
+  /// carries its own background, so this flag no longer changes rendering.
   final bool dark;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: dark ? AppColors.charcoal : AppColors.primary,
-        borderRadius: BorderRadius.circular(size * 0.28),
-        border: Border.all(color: AppColors.primarySoft, width: dark ? 1.5 : 0),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.28),
+      child: Image.asset(
+        'assets/images/logo_icon.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       ),
-      alignment: Alignment.center,
-      child: Text('S',
-          style: GoogleFonts.barlowCondensed(
-              fontSize: size * 0.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary)),
     );
   }
 }
