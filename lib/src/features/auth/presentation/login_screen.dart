@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/auth_errors.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

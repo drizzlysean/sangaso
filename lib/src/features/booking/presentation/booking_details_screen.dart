@@ -33,7 +33,6 @@ class BookingDetailsScreen extends StatelessWidget {
       case BookingStatus.completed:  return 'Completed';
       case BookingStatus.cancelled:  return 'Cancelled';
       case BookingStatus.declined:   return 'Declined';
-      default: return s.name;
     }
   }
 

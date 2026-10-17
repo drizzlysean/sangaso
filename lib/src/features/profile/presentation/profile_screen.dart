@@ -26,7 +26,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   // For web: Store image as bytes
   Uint8List? _webImageBytes;
-  String? _webImageName;
 
   // For mobile/desktop
   File? _selectedImage;
@@ -59,7 +58,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (!mounted) return;
           setState(() {
             _webImageBytes = bytes;
-            _webImageName = pickedFile.name;
           });
         } else {
           // Mobile/Desktop: Use File
@@ -135,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _selectedImage = null;
         _webImageBytes = null;
-        _webImageName = null;
+
       });
 
       if (context.mounted) {
@@ -180,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ? (kIsWeb
                 ? MemoryImage(_webImageBytes!) as ImageProvider
                 : FileImage(_selectedImage!) as ImageProvider)
-          : (hasPhotoUrl ? NetworkImage(photoUrl!) as ImageProvider : null),
+          : (hasPhotoUrl ? NetworkImage(photoUrl) as ImageProvider : null),
       child: !hasImage && !hasPhotoUrl
           ? Icon(Icons.person, size: 60, color: textSecondary)
           : null,
@@ -300,7 +298,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           setState(() {
                             _selectedImage = null;
                             _webImageBytes = null;
-                            _webImageName = null;
                           });
                         },
                       ),
@@ -405,7 +402,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() {
                           _selectedImage = null;
                           _webImageBytes = null;
-                          _webImageName = null;
                         });
                       },
                       child: const Text(

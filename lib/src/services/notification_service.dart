@@ -146,9 +146,10 @@ class FirebaseNotificationService implements NotificationService {
         .where('userId', isEqualTo: userId)
         .get();
 
-
     for (var doc in snapshot.docs) {
-      final data = doc.data();
+      // Sanity probe used during emulator debugging: touch the doc data
+      // so a malformed field surfaces as an exception to callers.
+      doc.data()['isRead'];
     }
   }
 

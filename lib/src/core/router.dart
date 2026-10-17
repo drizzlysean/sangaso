@@ -35,7 +35,6 @@ GoRouter createRouter(AuthService authService) {
       final isAuthPath = path == '/login' || path == '/signup' || isWelcome;
       final isSplash = path == '/';
       final isVerifying = path == '/verify-email';
-      final isProfileSetup = path == '/profile-setup';
 
       if (!authService.isInitialized) {
         return isSplash ? null : '/';

@@ -142,11 +142,9 @@ class MockNotificationService implements NotificationService {
   Future<void> markAllAsUnread(String userId) async {
     await Future.delayed(const Duration(milliseconds: 300));
 
-    int count = 0;
     for (var i = 0; i < _notifications.length; i++) {
       if (_notifications[i].userId == userId && _notifications[i].isRead) {
         _notifications[i] = _notifications[i].copyWith(isRead: false);
-        count++;
       }
     }
 
