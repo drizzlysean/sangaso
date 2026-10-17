@@ -56,6 +56,17 @@ class _List extends StatelessWidget {
   final bool isProvider, active;
   const _List({required this.userId, required this.isProvider, required this.active});
 
+  static String _statusLabel(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.requested:  return 'Requested';
+      case BookingStatus.accepted:   return 'Accepted';
+      case BookingStatus.inProgress: return 'In progress';
+      case BookingStatus.completed:  return 'Completed';
+      case BookingStatus.declined:   return 'Declined';
+      case BookingStatus.cancelled:  return 'Cancelled';
+    }
+  }
+
   @override
   Widget build(BuildContext context) => StreamBuilder<List<BookingModel>>(
     stream: context.read<BookingService>().getBookingsForUser(userId, isProvider),
@@ -106,7 +117,7 @@ class _List extends StatelessWidget {
                 Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                   Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(color: col.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                    child: Text(b.status.name, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: col))),
+                    child: Text(_statusLabel(b.status), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: col))),
                   const SizedBox(height: 6),
                   Text('K${b.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
                 ]),
