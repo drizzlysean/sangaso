@@ -1,9 +1,4 @@
 # Miscellaneous
-/APK_AAD/
-/APK_AAD/signing/
-*.aab
-~$*.docx
-~$*
 *.class
 *.log
 *.pyc
@@ -13,20 +8,14 @@
 .build/
 .buildlog/
 .history
-.svn/
 .swiftpm/
-migrate_working_dir/
+~$*
 
-# IntelliJ related
+# IntelliJ / Android Studio related
 *.iml
 *.ipr
 *.iws
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -37,6 +26,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+pubspec.lock.bak
 
 # Symbolication related
 app.*.symbols
@@ -44,86 +34,50 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Build artifacts kept out of Git (signed bundles, local test builds)
+/artifacts/
 /android/app/debug
 /android/app/profile
 /android/app/release
-# Additional Android patterns
+*.apk
+*.ap_
+*.aab
+*.dex
+
+# Android secrets — never commit these
 *.keystore
 *.jks
 android/key.properties
 local.properties
-*.apk
-*.ap_
-*.dex
+
+# Firebase / Google services — never commit these
 google-services.json
 app/google-services.json
-.vscode/
-logs/
-*.log
+firebase-debug.log
+firebase-debug.*.json*
+firestore-debug.log
+ui-debug.log
 
-# Additional Android patterns
-*.keystore
-*.jks
-local.properties
-
-# Generated files
-*.apk
-*.ap_
-*.dex
-
-# Firebase/Google services
-google-services.json
-app/google-services.json
+# Signing/credentials
+key.properties
+*.env
+.env
 
 # Crashlytics
 com_crashlytics_export_strings.xml
 crashlytics.properties
 
-# Build folders
-/android/build/
-/ios/build/
+# Migration / working files
+migrate_working_dir/
+ Verizon/
+ temporaries/
 
-# VS Code (uncomment if needed)
+# VS Code
 .vscode/
 
 # Temp files
 *.tmp
 *.temp
 
-# Logs
-logs/
-*.log
-
-# Additional Android patterns
-*.keystore
-*.jks
-local.properties
-
-# Generated files
-*.apk
-*.ap_
-*.dex
-
-# Firebase/Google services
-google-services.json
-app/google-services.json
-
-# Crashlytics
-com_crashlytics_export_strings.xml
-crashlytics.properties
-
-# Build folders
-/android/build/
-/ios/build/
-
-# VS Code (uncomment if needed)
-.vscode/
-
-# Temp files
-*.tmp
-*.temp
-
-# Logs
-logs/
-*.log
+# Windows symlink workspace
+~$*
