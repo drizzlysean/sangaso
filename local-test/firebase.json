@@ -1,0 +1,26 @@
+{
+  "description": "Local Firebase emulator test harness for the Sangaso app. NEVER connects to production; run with --project demo-sangaso-local.",
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true,
+      "host": "127.0.0.1",
+      "port": 4000
+    },
+    "singleProjectMode": true
+  },
+  "firestore": {
+    "rules": "firestore.rules.emulator"
+  },
+  "storage": {
+    "rules": "storage.rules.emulator"
+  }
+}

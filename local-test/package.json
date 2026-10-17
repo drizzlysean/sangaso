@@ -1,0 +1,11 @@
+{
+  "name": "sangaso-local-test",
+  "private": true,
+  "description": "Local emulator seed for Sangaso. Never contacts production.",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
