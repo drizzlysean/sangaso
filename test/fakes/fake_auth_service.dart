@@ -10,9 +10,12 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
     this.currentUserModel,
     Object? Function()? signInError,
     Object? Function()? signUpError,
+    Object? Function()? googleSignInError,
+    this.lastGoogleUserDisplayName,
     DelayedValue<UserModel?>? signInResult,
   })  : _signInError = signInError,
         _signUpError = signUpError,
+        _googleSignInError = googleSignInError,
         _signInResult = signInResult,
         _isInitialized = true;
 
@@ -59,6 +62,26 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
       role: role,
       isVerified: false,
       displayName: name,
+    );
+    notifyListeners();
+  }
+
+  bool _googleSignInCalled = false;
+  Object? Function()? _googleSignInError;
+  bool get googleSignInCalled => _googleSignInCalled;
+  String? lastGoogleUserDisplayName;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    _googleSignInCalled = true;
+    final error = _googleSignInError?.call();
+    if (error != null) throw error;
+    currentUserModel = UserModel(
+      id: 'google-user',
+      email: 'google@test.sangaso.com',
+      role: UserRole.seeker,
+      isVerified: true,
+      displayName: lastGoogleUserDisplayName ?? 'Google User',
     );
     notifyListeners();
   }

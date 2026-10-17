@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/brand.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,9 @@ import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/auth_errors.dart';
+
+const kTermsUrl = 'https://www.sangaso.com/?page=terms';
+const kPrivacyUrl = 'https://www.sangaso.com/?page=privacy';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -23,6 +28,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _loading = false;
   bool _hidePass = true;
   bool _hideConf = true;
+  bool _consent = false;
 
   @override
   void dispose() {
@@ -31,8 +37,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  void _consentError() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Please accept the Terms of Service and Privacy Notice to create an account.'),
+      backgroundColor: AppColors.error,
+    ));
+  }
+
+  Future<void> _googleSubmit() async {
+    if (!_consent) { _consentError(); return; }
+    setState(() => _loading = true);
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_consent) { _consentError(); return; }
     setState(() => _loading = true);
     try {
       await context.read<AuthService>().signUp(
@@ -111,7 +139,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               label: 'Create Account',
               trailingIcon: Icons.arrow_forward_rounded,
               loading: _loading,
-              onPressed: _loading ? null : _submit,
+              onPressed: _loading ? null : _consent ? _submit : _consentError,
             ),
             const SizedBox(height: 24),
 

@@ -14,6 +14,7 @@ import 'src/services/account_deletion_service.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/booking_service.dart';
 import 'src/services/email_verification_service.dart';
+import 'src/services/fcm_service.dart';
 import 'src/services/messaging_service.dart';
 import 'src/services/notification_service.dart';
 import 'src/services/review_service.dart';
@@ -44,6 +45,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // FCM background handler must be registered before runApp so background
+  // deliveries (data-only, sent by the trusted backend) have a handler.
+  FirebaseMessaging.onBackgroundMessage(fcmBackgroundHandler);
+
   if (useEmulators) {
     await FirebaseAuth.instance.useAuthEmulator(_kEmulatorHost, _kAuthEmulatorPort);
     FirebaseFirestore.instance.useFirestoreEmulator(_kEmulatorHost, _kFirestoreEmulatorPort);
@@ -58,6 +63,7 @@ void main() async {
   final serviceService = ServiceService();
   final emailVerificationService = FirebaseAuthEmailVerificationService();
   final accountDeletionService = AccountDeletionService();
+  final fcmService = FcmService();
 
   runApp(
     MultiProvider(
@@ -70,6 +76,7 @@ void main() async {
         Provider<NotificationService>.value(value: notificationService),
         Provider<EmailVerificationService>.value(value: emailVerificationService),
         Provider<AccountDeletionService>.value(value: accountDeletionService),
+        Provider<FcmService>.value(value: fcmService),
       ],
       child: SangasoApp(
         authService: authService,

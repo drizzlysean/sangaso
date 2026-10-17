@@ -40,18 +40,22 @@ GoRouter createRouter(AuthService authService) {
         return isSplash ? null : '/';
       }
 
-      if (user == null) {
-        if (isSplash) return '/welcome';
-        if (isAuthPath) return null;
-        return '/welcome';
-      }
+if (user == null) {
+      if (isSplash) return '/welcome';
+      if (isAuthPath) return null;
+      return '/welcome';
+    }
 
-      if (!user.isVerified) {
-        if (isVerifying) return null;
-        return '/verify-email';
-      }
+    if (!user.isVerified) {
+      if (isVerifying) return null;
+      return '/verify-email';
+    }
 
-      if (isAuthPath || isSplash || isVerifying) {
+    if (!user.displayName.isNotEmpty || !user.city.isNotEmpty) {
+      return '/profile-setup';
+    }
+
+    if (isAuthPath || isSplash || isVerifying) {
         if (user.role == UserRole.admin) return '/admin';
         return '/home';
       }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // USE RELATIVE IMPORT INSTEAD OF PACKAGE IMPORT:
 import '../models/user_model.dart'; // This should work since both are in src folder
@@ -11,6 +12,7 @@ abstract class AuthService extends ChangeNotifier {
   bool get isInitialized;
 
   Future<void> signIn(String email, String password);
+  Future<void> signInWithGoogle();
   Future<void> signUp({
     required String email,
     required String password,
@@ -136,6 +138,54 @@ class FirebaseAuthService extends AuthService {
   }
 
   @override
+  Future<void> signInWithGoogle() async {
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) return; // user cancelled the picker
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final cred = await _auth.signInWithCredential(credential);
+    final uid = cred.user?.uid;
+    if (uid == null) return;
+
+    final existingDoc =
+        await _firestore.collection('users').doc(uid).get();
+    if (!existingDoc.exists) {
+      final userModel = UserModel(
+        id: uid,
+        email: cred.user?.email ?? googleUser.email,
+        role: UserRole.seeker,
+        isVerified: cred.user?.emailVerified ?? true,
+        displayName: cred.user?.displayName ?? googleUser.displayName,
+        phoneNumber: null,
+        city: null,
+        address: null,
+        tradingName: null,
+        category: null,
+        bio: null,
+        basePrice: null,
+        photoUrl: cred.user?.photoURL,
+        isBanned: false,
+        isSuspended: false,
+      );
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set(userModel.toMap());
+      _cachedUser = userModel;
+    } else {
+      _cachedUser = await getCurrentUserModel();
+    }
+    _previousUserId = uid;
+    _isInitialized = true;
+    notifyListeners();
+  }
+
+  @override
   Future<void> signUp({
     required String email,
     required String password,
@@ -187,6 +237,11 @@ class FirebaseAuthService extends AuthService {
 
   @override
   Future<void> signOut() async {
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {
+      // Google sign-in may not have been used; ignore.
+    }
     await _auth.signOut();
     // Listener will handle notifyListeners
   }
