@@ -4,13 +4,15 @@
 
 | Item | Value | How to re-verify |
 | --- | --- | --- |
-| Source commit (this build) | run `39019071100` dispatched on `recovery/unified-design-2026-10-17` (~`a070d7f`, run may tidy-commit nothing) | `gh run view 39019071100 --json headSha` |
-| File | `app-release.aab` from artifact `sangaso-release-aab` | Actions page → artifacts |
+| Source commit (this build) | run `39019071100`, branch `recovery/unified-design-2026-10-17`, head `256e73e` | `gh run view 39019071100 -R drizzlysean/sangaso --json headSha` |
+| File | `app-release.aab` from artifact `sangaso-release-aab` (kept in untracked `artifacts/`) | Actions page → artifacts |
+| SHA-256 | `b012bca420debb79dc80d2f1f3a8fee191dc4672177e844c427d9bd9de26a637` | `(Get-FileHash artifacts\app-release.aab -Algorithm SHA256).Hash.ToLower()` |
+| Size | 46,174,765 bytes | file properties |
 | Package | `com.sangaso.app` | bundletool dump manifest |
 | Version name / code | **1.0.3** / **4** | bundletool dump manifest; pubspec.yaml |
 | minSdk / targetSdk | 24 / **36** (Android 16 — Play policy target since Aug 2026) | bundletool dump manifest |
-| Signing | upload key (keystore from `UPLOAD_KEYSTORE_BASE64`), NOT a new key | `META-INF/UPLOAD.SF` + `UPLOAD.RSA` entries |
-| Emulator safety | release built WITHOUT `--dart-define=SANGASO_USE_EMULATORS` | workflow yml contains no dart-define |
+| Signing | upload key (keystore from `UPLOAD_KEYSTORE_BASE64`), NOT a new key | `META-INF/UPLOAD.SF` + `UPLOAD.RSA` entries verified |
+| Emulator safety | release built WITHOUT `--dart-define=SANGASO_USE_EMULATORS` | workflow yml contains no dart-define; `useEmulators` off by test |
 
 Re-verify commands on this machine (PowerShell):
 
