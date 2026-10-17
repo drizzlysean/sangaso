@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,12 +27,17 @@ const int _kStorageEmulatorPort = 9199;
 
 /// Explicit, OPT-IN Firebase emulator mode.
 /// Enabled with `flutter run --dart-define=SANGASO_USE_EMULATORS=true` or by
-/// setting the SANGASO_USE_EMULATORS=true environment variable.
-/// There is NO automatic production fallback: production/backed Firebase is
-/// never touched when this flag is unset.
+/// setting the SANGASO_USE_EMULATORS=true environment variable (mobile and
+/// desktop targets only). There is NO automatic production fallback:
+/// production/backed Firebase is never touched when this flag is unset.
 bool get useEmulators {
   const compileTime = bool.fromEnvironment(_kEmulatorFlag);
-  return compileTime || Platform.environment[_kEmulatorFlag] == 'true';
+  if (compileTime || kIsWeb) {
+    // The env-var lookup is a dart:io platform API; on web only the
+    // compile-time --dart-define switch can enable emulator mode.
+    return compileTime;
+  }
+  return Platform.environment[_kEmulatorFlag] == 'true';
 }
 
 void main() async {
