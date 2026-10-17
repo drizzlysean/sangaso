@@ -87,6 +87,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SANGASO'), findsOneWidget);
-    expect(find.text('Login to Continue'), findsOneWidget);
+    expect(find.text('Get started'), findsOneWidget);
   });
 }

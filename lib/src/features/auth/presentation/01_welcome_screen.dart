@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/brand.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '02_how_it_works_screen.dart';
 
@@ -10,31 +12,34 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.canvas,
       body: SingleChildScrollView(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.symmetric(horizontal: 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logo/Header Section
-                _buildHeader(),
+                const SizedBox(height: 20),
+
+                _buildHeader(context),
+                const SizedBox(height: 34),
+
+                _buildHero(),
+                const SizedBox(height: 26),
+
+                _buildFeatureStrip(context),
                 const SizedBox(height: 30),
 
-                // Main Content
-                _buildMainContent(),
-                const SizedBox(height: 40),
+                const CharcoalPanel(
+                  child: _HowItWorksPeek(),
+                ),
+                const SizedBox(height: 30),
 
-                // How It Works Section
-                _buildHowItWorksSection(context),
-                const SizedBox(height: 40),
+                _buildActions(context),
+                const SizedBox(height: 18),
 
-                // Testimonials
-                _buildTestimonials(),
-                const SizedBox(height: 40),
-
-                // Login Button
-                _buildLoginButton(context),
+                _buildTruthfulFooter(context),
                 const SizedBox(height: 20),
               ],
             ),
@@ -44,71 +49,109 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        const BrandLogoMark(size: 44),
+        const SizedBox(width: 12),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('SANGASO',
+              style: GoogleFonts.barlowCondensed(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: AppColors.text1)),
+          Text('Service providers · Service seekers',
+              style: GoogleFonts.inter(
+                  fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w500)),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildHero() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'SANGASO',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
+        const SectionEyebrow('SERVICES MARKETPLACE'),
+        const SizedBox(height: 12),
+        const DisplayHeading(
+          plain: 'Find quality local help',
+          accentItalic: 'and trusted work.',
+          size: 38,
         ),
+        const SizedBox(height: 14),
         Text(
-          'Service Providers · Service Seekers',
-          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+          'Sangaso connects you with carpenters, electricians, plumbers, '
+          'cleaners, tutors and more — with transparent profiles, '
+          'straightforward pricing and quick booking.',
+          style: GoogleFonts.inter(
+              fontSize: 14, height: 1.6, color: AppColors.text2),
         ),
       ],
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildFeatureStrip(BuildContext context) {
+    final features = const [
+      (Icons.location_on_outlined, 'Find help nearby'),
+      (Icons.badge_outlined, 'Real provider profiles'),
+      (Icons.fork_right_rounded, 'Fast booking flow'),
+    ];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        for (final f in features)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryDim,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primaryMid),
+                  ),
+                  child: Icon(f.$1, size: 22, color: AppColors.primaryDeep),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  f.$2,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text2,
+                      height: 1.25),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ]),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActions(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Find trusted local service providers in minutes.',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
+        PrimaryButton(
+          label: 'Get started',
+          trailingIcon: Icons.arrow_forward_rounded,
+          onPressed: () => context.go('/login'),
         ),
-        const SizedBox(height: 15),
-        Text(
-          'SANGASO connects you to carpenters, electricians, plumbers, mechanics, cleaners and more — with transparent profiles, reviews, and quick booking.',
-          style: TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.5),
-        ),
-        const SizedBox(height: 25),
-
-        // Features Grid with green and orange - FIXED FOR RESPONSIVENESS
-        LayoutBuilder(
-          builder: (context, constraints) {
-            // Check screen width
-            final screenWidth = constraints.maxWidth;
-
-            // Use shorter text on smaller screens
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildFeature(
-                  '📍',
-                  screenWidth < 380 ? 'Nearby' : 'Location-based nearby',
-                  AppColors.accent,
-                ),
-                _buildFeature(
-                  '✓',
-                  screenWidth < 380 ? 'Verified' : 'Verified providers',
-                  AppColors.primary,
-                ),
-                _buildFeature(
-                  '⭐',
-                  screenWidth < 380 ? 'Reviews' : 'Ratings & Reviews',
-                  AppColors.primary,
-                ),
-              ],
+        const SizedBox(height: 12),
+        SecondaryButton(
+          label: 'How Sangaso works',
+          trailingIcon: Icons.help_outline_rounded,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HowItWorksScreen()),
             );
           },
         ),
@@ -116,276 +159,71 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeature(String icon, String text, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(icon, style: TextStyle(fontSize: 24, color: color)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: 80, // Fixed width to control text wrapping
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHowItWorksSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'How it works',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HowItWorksScreen()),
-                );
-              },
-              child: Text(
-                'See more →',
-                style: TextStyle(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-
-        // Quick Steps with green and orange
-        _buildStepCard(
-          'For Service Seekers',
-          '1. Search a service by category and location.\n2. Compare providers (price, rating, distance).\n3. Book, chat, confirm, and get the job done.',
-          '3 easy steps',
-          AppColors.accent,
-          Icons.search,
-        ),
-        const SizedBox(height: 15),
-        _buildStepCard(
-          'For Service Providers',
-          '1. Create a profile (skills, location, photos).\n2. Receive job requests and respond fast.\n3. Deliver quality work and earn with good reviews.',
-          'Grow your work',
-          AppColors.primary,
-          Icons.business_center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepCard(
-    String title,
-    String content,
-    String tag,
-    Color color,
-    IconData icon,
-  ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              content,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: color.withOpacity(0.3)),
-              ),
-              child: Text(
-                tag,
-                style: TextStyle(color: color, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildTruthfulFooter(BuildContext context) {
+    return Center(
+      child: Text(
+        'Already have an account? Sign in to continue',
+        style: GoogleFonts.inter(fontSize: 12, color: AppColors.text3),
       ),
     );
   }
+}
 
-  Widget _buildTestimonials() {
+class _HowItWorksPeek extends StatelessWidget {
+  const _HowItWorksPeek();
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'What users say',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+        Row(children: [
+          const SectionEyebrow('QUICK START', color: AppColors.primarySoft),
+          const Spacer(),
+          ArrowLink(
+            label: 'See more',
+            color: AppColors.primarySoft,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HowItWorksScreen()),
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 15),
-        _buildTestimonialCard(
-          'SANGASO helped me find a reliable electrician quickly. The profile and reviews made it easy to trust.',
-          '★★★★★',
-          AppColors.accent,
-        ),
+        ]),
+        const SizedBox(height: 14),
+        _peekStep(
+            '1', 'Search a service by category, compare provider profiles.'),
         const SizedBox(height: 10),
-        _buildTestimonialCard(
-          'I registered as a carpenter and started getting enquiries within a short time. It\'s a good platform.',
-          '★★★★★',
-          AppColors.primary,
-        ),
+        _peekStep(
+            '2', 'Book, chat and confirm the job with the provider.'),
+        const SizedBox(height: 10),
+        _peekStep(
+            '3', 'Providers respond to requests and complete great work.'),
       ],
     );
   }
 
-  Widget _buildTestimonialCard(String text, String rating, Color color) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.2), width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  rating,
-                  style: TextStyle(fontSize: 18, color: Colors.amber[700]),
-                ),
-                const Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.person, color: color, size: 16),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                height: 4,
-                width: 60,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          ],
+  Widget _peekStep(String number, String text) {
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(7),
         ),
+        alignment: Alignment.center,
+        child: Text(number,
+            style: GoogleFonts.barlowCondensed(
+                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primarySoft)),
       ),
-    );
-  }
-
-  Widget _buildLoginButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          context.go('/login');
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 4,
-          shadowColor: AppColors.accent.withOpacity(0.3),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Login to Continue',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 20),
-          ],
-        ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(text,
+            style: GoogleFonts.inter(
+                fontSize: 12.5, height: 1.5, color: AppColors.lightText)),
       ),
-    );
+    ]);
   }
 }

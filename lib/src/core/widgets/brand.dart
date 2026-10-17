@@ -155,8 +155,7 @@ class BrandLogoMark extends StatelessWidget {
 
 /// Small caps eyebrow label above a section (deep orange, wide tracking).
 class SectionEyebrow extends StatelessWidget {
-  const SectionEyebrow({super.key, required this.text, this.color});
-
+  const SectionEyebrow(String this.text, {super.key, this.color});
   final String text;
   final Color? color;
 
