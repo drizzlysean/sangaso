@@ -34,8 +34,14 @@ abstract class NotificationService {
 
 // Firebase implementation
 class FirebaseNotificationService implements NotificationService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestoreOverride;
   final _uuid = const Uuid();
+
+  FirebaseNotificationService({FirebaseFirestore? firestore})
+      : _firestoreOverride = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   @override
   Future<void> sendNotification({

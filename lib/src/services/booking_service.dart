@@ -21,13 +21,18 @@ abstract class BookingService {
 }
 
 class FirebaseBookingService implements BookingService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final _uuid = const Uuid();
+  final FirebaseFirestore? _firestoreOverride;
   final NotificationService _notificationService;
 
-  // ✅ Constructor to receive NotificationService
-  FirebaseBookingService({required NotificationService notificationService})
-    : _notificationService = notificationService;
+  // Constructor to receive NotificationService
+  FirebaseBookingService({
+    required NotificationService notificationService,
+    FirebaseFirestore? firestore,
+  })  : _notificationService = notificationService,
+        _firestoreOverride = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   @override
   Future<String> createBooking({
@@ -53,7 +58,27 @@ class FirebaseBookingService implements BookingService {
     final seekerData = seekerDoc.data()!;
     final providerData = providerDoc.data()!;
 
-    final id = _uuid.v4();
+    // Stable idempotency key: a client retrying an identical request
+    // (same seeker, provider, slot and address) maps onto one booking
+    // instead of creating duplicates; the still-open booking is
+    // returned as-is without a second provider notification.
+    final fingerprint =
+        '$seekerId|$providerId|${scheduledTime.toUtc().millisecondsSinceEpoch}|${address.trim().toLowerCase()}';
+    var id = const Uuid().v5(
+        '6ba7b811-9dad-11d1-80b4-00c04fd430c8', fingerprint);
+
+    final existing = await _firestore.collection('bookings').doc(id).get();
+    if (existing.exists && existing.data()!.containsKey('status')) {
+      final activeStatuses = {'requested', 'accepted', 'inProgress'};
+      if (activeStatuses.contains(existing.data()!['status'])) {
+        return id;
+      }
+      // Previous identical request reached a terminal state - new booking.
+      id = const Uuid().v5(
+          '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+          '$fingerprint|${DateTime.now().toIso8601String()}');
+    }
+
     final booking = BookingModel(
       id: id,
       seekerId: seekerId,
