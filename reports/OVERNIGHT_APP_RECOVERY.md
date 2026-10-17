@@ -231,3 +231,35 @@ versionName 1.0.3 confirmed via aapt), git diff --check clean.
 
 Deferred: device-testing round needs the owner's phone for wireless ADB
 pairing; internal-testing upload needs the owner's Play Console session.
+
+Session 3 branding (2026-10-17) -- owner ordered the authentic logo swap
+(no website edits, main untouched):
+
+- Located master logo: 'Sangaso WEBSITE\public_html\logo.png' (1201x1445,
+  opaque) with card bg ~srgb(188-192). Preserved original copy in
+  app\brand\logo-source.png; card crop saved as app\brand\logo-card.png.
+- Generated via ImageMagick: assets/images/app_icon.png (1024, transparent
+  rounded corners r=180), app_icon_foreground.png (card centered on
+  transparent 1024), app_icon_background.png (flat gray), logo_icon.png
+  (512, r=90 -- replaces the drawn-S placeholder, used by splash +
+  BrandLogoMark). Legacy unused logo_full.png removed.
+- Code: BrandLogoMark now renders the authentic asset (dark param kept
+  as no-op for compatibility); splash shows the rounded asset directly
+  (orange box backdrop removed); signup header gained BrandLogoMark(44);
+  login/welcome already route through BrandLogoMark.
+- pubspec: legacy flutter_icons block migrated to flutter_launcher_icons
+  with adaptive_icon_background/foreground, min_sdk_android 21, web +
+  windows generation. Icon sets regenerated (mipmaps, adaptive drawable
+  layers, anydpi-v26 xml, favicon + web manifest icons, windows .ico).
+- Validation after branding: pub get OK; 69/69 tests pass; analyze 220
+  infos, 0 errors 0 warnings; app-debug.apk rebuilt (605.7s), aapt verified
+  com.sangaso.app versionCode 4 versionName 1.0.3.
+
+Release artifact rebuilt with branding -- CI run 39028406795, commit
+a97553b: artifacts\app-release.aab 46,387,694 bytes, SHA-256
+a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5,
+manifest com.sangaso.app 1.0.3 (4), minSdk 24 targetSdk 36,
+META-INF UPLOAD.SF/UPLOAD.RSA present, and the four new branding assets
+byte-size-confirmed inside flutter_assets. Superseded builds recorded in
+PLAY_RELEASE_CHECKLIST.md. NOT uploaded to Play -- owner asked to
+confirm the new branding first.

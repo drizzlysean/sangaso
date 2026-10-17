@@ -75,3 +75,19 @@ interactive UI runs on a real device are pending the owner's phone.
 - `FLUTTER_UI_INTEGRATION_RESULTS.md` — UI/design alignment evidence
 - `LOCAL_FIREBASE_EMULATOR_GUIDE.md` — exact machine paths + commands
 - `PLAY_RELEASE_CHECKLIST.md` — release/submission facts
+
+## Session 3 addendum -- authentic branding (2026-10-17, commit a97553b)
+
+Owner ordered the placeholder-logo replacement with the authentic
+website logo after this report was written. Re-validated post-swap:
+pub get OK, 69/69 tests pass, analyze 0 errors / 0 warnings (220 infos),
+app-debug.apk 605.7s build OK (aapt: com.sangaso.app 4 / 1.0.3).
+Launcher icons + adaptive layers + favicon/web/windows icons regenerated
+from the preserved master (brand\logo-source.png).
+
+New verified release artifact (supersedes the row in R3): CI run
+39028406795, commit a97553b, app-release.aab 46,387,694 B, SHA-256
+a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5,
+com.sangaso.app 1.0.3 (4), minSdk 24 / targetSdk 36, UPLOAD-signed.
+Branding assets byte-verified inside the bundle. Play upload remains
+owner-gated until the branding is confirmed.

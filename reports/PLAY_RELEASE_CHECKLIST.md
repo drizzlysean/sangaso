@@ -4,15 +4,16 @@
 
 | Item | Value | How to re-verify |
 | --- | --- | --- |
-| Source commit (this build) | run `39019071100`, branch `recovery/unified-design-2026-10-17`, head `256e73e` | `gh run view 39019071100 -R drizzlysean/sangaso --json headSha` |
+| Source commit (this build) | run `39028406795`, branch `recovery/unified-design-2026-10-17`, head `a97553b` (includes authentic branding) | `gh run view 39028406795 -R drizzlysean/sangaso --json headSha` |
 | File | `app-release.aab` from artifact `sangaso-release-aab` (kept in untracked `artifacts/`) | Actions page → artifacts |
-| SHA-256 | `b012bca420debb79dc80d2f1f3a8fee191dc4672177e844c427d9bd9de26a637` | `(Get-FileHash artifacts\app-release.aab -Algorithm SHA256).Hash.ToLower()` |
-| Size | 46,174,765 bytes | file properties |
+| SHA-256 | `a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5` | `(Get-FileHash artifacts\app-release.aab -Algorithm SHA256).Hash.ToLower()` |
+| Size | 46,387,694 bytes | file properties |
 | Package | `com.sangaso.app` | bundletool dump manifest |
 | Version name / code | **1.0.3** / **4** | bundletool dump manifest; pubspec.yaml |
 | minSdk / targetSdk | 24 / **36** (Android 16 — Play policy target since Aug 2026) | bundletool dump manifest |
 | Signing | upload key (keystore from `UPLOAD_KEYSTORE_BASE64`), NOT a new key | `META-INF/UPLOAD.SF` + `UPLOAD.RSA` entries verified |
 | Emulator safety | release built WITHOUT `--dart-define=SANGASO_USE_EMULATORS` | workflow yml contains no dart-define; `useEmulators` off by test |
+| Branding | authentic logo; preserved original at `brand/logo-source.png`; regenerated `logo_icon.png`, `app_icon.png` + adaptive layers + web/windows icons; new asset sizes confirmed inside the AAB | zip listing of app-release.aab |
 
 Re-verify commands on this machine (PowerShell):
 
@@ -25,18 +26,19 @@ java -jar artifacts\bundletool.jar dump manifest --bundle=app-release.aab
 java -jar artifacts\bundletool.jar build-apks --bundle=app-release.aab --output=temp.apks
 ```
 
-The 1.0.2+3 AAB (SHA-256 `dca22173...fe348`, versionCode 3) is
-SUPERSEDED — do not upload it; 1.0.3+4 includes onboarding, booking/
-messaging/admin/deletion fixes and naming.
+Superseded artifacts (do NOT submit — placeholder branding):
+- `1.0.2+3`, run `39007126737`, SHA-256 `dca22173e55094d8748a5ba8556be93e2c075a450ea459b740055c5d56bfe348`
+- `1.0.3+4` pre-branding, run `39019071100`, SHA-256 `b012bca420debb79dc80d2f1f3a8fee191dc4672177e844c427d9bd9de26a637`
 
 ## Pre-submission gates
 
 1. **Play Console version codes** — check the highest versionCode Play
    already has (owner's console). If 4 was previously consumed, rebuild:
    `gh workflow run "Build APK" -R drizzlysean/sangaso --ref recovery/unified-design-2026-10-17 -f build_number=<n+1>` and re-verify.
-2. **Brand asset** — confirm or swap the logo placeholder before upload
-   (owner decision; app icon = `assets/images/app_icon.png` via
-   flutter_launcher_icons).
+2. **Brand asset** — RESOLVED: authentic logo from the recovered
+   website is now the app's branding (owner-ordered swap, commit
+   `a97553b`). Launcher icon = `assets/images/app_icon.png` via
+   flutter_launcher_icons (+ adaptive foreground/background).
 3. **Firebase production config** — app uses `google-services.json` +
    `firebase_options.dart` defaults; no emulator leak (test-enforced).
 4. **Internal testing track** — upload through the OWNER's browser
