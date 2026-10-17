@@ -15,8 +15,14 @@ abstract class ReviewService {
 }
 
 class FirebaseReviewService implements ReviewService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestoreOverride;
   final _uuid = const Uuid();
+
+  FirebaseReviewService({FirebaseFirestore? firestore})
+      : _firestoreOverride = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   @override
   Future<void> addReview({
@@ -26,6 +32,11 @@ class FirebaseReviewService implements ReviewService {
     required double rating,
     required String comment,
   }) async {
+    if (rating < 1.0 || rating > 5.0) {
+      throw ArgumentError.value(
+          rating, 'rating', 'Rating must be between 1 and 5.');
+    }
+
     // Prevent duplicate reviews for the same booking (e.g. accidental
     // double-tap on Submit, or reopening the review dialog).
     final existing = await _firestore
