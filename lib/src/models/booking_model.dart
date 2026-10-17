@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'firestore_date.dart';
+
 enum BookingStatus {
   requested,
   accepted,
@@ -92,14 +94,14 @@ class BookingModel {
       seekerId: map['seekerId'] ?? '',
       providerId: map['providerId'] ?? '',
       serviceType: map['serviceType'] ?? '',
-      scheduledTime: (map['scheduledTime'] as Timestamp).toDate(),
+      scheduledTime: parseFirestoreDate(map['scheduledTime'], field: 'scheduledTime'),
       address: map['address'] ?? '',
       price: (map['price'] as num).toDouble(),
       status: BookingStatus.values.firstWhere(
         (e) => e.name == map['status'],
         orElse: () => BookingStatus.requested,
       ),
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      createdAt: parseFirestoreDate(map['createdAt'], field: 'createdAt'),
       seekerName: map['seekerName'],
       seekerPhone: map['seekerPhone'],
       seekerEmail: map['seekerEmail'],
@@ -107,17 +109,9 @@ class BookingModel {
       providerPhone: map['providerPhone'],
       providerEmail: map['providerEmail'],
       specialInstructions: map['specialInstructions'],
-      acceptedAt: map['acceptedAt'] != null
-          ? (map['acceptedAt'] as Timestamp).toDate()
-          : null,
-      startedAt: map['startedAt'] != null
-          ? (map['startedAt'] as Timestamp).toDate()
-          : null,
-      completedAt: map['completedAt'] != null
-          ? (map['completedAt'] as Timestamp).toDate()
-          : null,
+      acceptedAt: parseFirestoreDateOrNull(map['acceptedAt'], field: 'acceptedAt'),
+      startedAt: parseFirestoreDateOrNull(map['startedAt'], field: 'startedAt'),
+      completedAt: parseFirestoreDateOrNull(map['completedAt'], field: 'completedAt'),
     );
   }
-
-  Null get bookingDate => null;
 }

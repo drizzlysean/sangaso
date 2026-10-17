@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'firestore_date.dart';
+
 class MessageModel {
   final String id;
   final String bookingId;
@@ -38,7 +40,7 @@ class MessageModel {
       senderId: map['senderId'] ?? '',
       text: map['text'] ?? '',
       imageUrl: map['imageUrl'],
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      timestamp: parseFirestoreDate(map['timestamp'], field: 'timestamp'),
       isRead: map['isRead'] ?? false,
     );
   }

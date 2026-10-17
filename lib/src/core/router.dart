@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/admin/presentation/admin_dashboard_screen.dart';
@@ -74,7 +73,11 @@ GoRouter createRouter(AuthService authService) {
         builder: (context, state, child) => MainShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
-          GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+          GoRoute(
+            path: '/search',
+            builder: (context, state) =>
+                SearchScreen(initialCategory: state.uri.queryParameters['category']),
+          ),
           GoRoute(path: '/bookings', builder: (context, state) => const BookingsListScreen()),
           GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
           GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),

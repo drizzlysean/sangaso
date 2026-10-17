@@ -1,22 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/service_categories.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../models/service_model.dart';
 import '../../../services/service_service.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialCategory});
+  final String? initialCategory;
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
   final _ctrl = TextEditingController();
-  String _cat = 'All';
+  late String _cat = validateSearchCategory(widget.initialCategory);
 
-  static const _cats = ['All','Cleaning','Plumbing','Electrical','Carpentry','Painting','Gardening','Moving','Tutoring','Beauty & Wellness','IT & Tech Support','Event Planning','Other'];
+  static const _cats = kSearchCategories;
 
   @override
   void initState() { super.initState(); _ctrl.addListener(() => setState(() {})); }

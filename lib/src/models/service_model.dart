@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'firestore_date.dart';
+
 class ServiceModel {
   final String id;
   final String providerId;
@@ -50,8 +52,8 @@ class ServiceModel {
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
       isActive: map['isActive'] ?? true,
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
+      createdAt: parseFirestoreDate(map['createdAt'], field: 'createdAt'),
+      updatedAt: parseFirestoreDate(map['updatedAt'], field: 'updatedAt'),
     );
   }
 

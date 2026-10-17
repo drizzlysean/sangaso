@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/auth_errors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context.go(u.role == UserRole.admin ? '/admin' : '/home');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e'), backgroundColor: AppColors.error));
+        SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -159,7 +160,7 @@ class _ForgotDialogState extends State<_ForgotDialog> {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reset email sent')));
             }
           } catch (e) {
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.error));
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
           } finally { if (mounted) setState(() => _loading = false); }
         },
         child: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Send'),

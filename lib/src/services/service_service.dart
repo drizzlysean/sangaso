@@ -3,7 +3,11 @@ import 'package:uuid/uuid.dart';
 import '../models/service_model.dart';
 
 class ServiceService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  ServiceService({FirebaseFirestore? firestore}) : _override = firestore;
+
+  final FirebaseFirestore? _override;
+
+  FirebaseFirestore get _firestore => _override ?? FirebaseFirestore.instance;
   final _uuid = const Uuid();
 
   // Create a new service

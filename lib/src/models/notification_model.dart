@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'firestore_date.dart';
+
 enum NotificationType {
   bookingRequest,
   bookingAccepted,
@@ -57,7 +59,7 @@ class NotificationModel {
       ),
       relatedId: map['relatedId'],
       isRead: map['isRead'] ?? false,
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      createdAt: parseFirestoreDate(map['createdAt'], field: 'createdAt'),
     );
   }
 

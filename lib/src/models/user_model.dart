@@ -1,4 +1,6 @@
 // lib/src/models/user_model.dart
+import 'firestore_date.dart';
+
 enum UserRole { seeker, provider, admin }
 
 class UserModel {
@@ -85,12 +87,8 @@ class UserModel {
       basePrice: (map['basePrice'] as num?)?.toDouble(),
       isBanned: map['isBanned'] ?? false,
       isSuspended: map['isSuspended'] ?? false,
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : null,
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'])
-          : null,
+      createdAt: parseFirestoreDateOrNull(map['createdAt'], field: 'createdAt'),
+      updatedAt: parseFirestoreDateOrNull(map['updatedAt'], field: 'updatedAt'),
     );
   }
 

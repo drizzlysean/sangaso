@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'firestore_date.dart';
+
 class ReviewModel {
   final String id;
   final String bookingId;
@@ -39,7 +41,7 @@ class ReviewModel {
       providerId: map['providerId'] ?? '',
       rating: (map['rating'] as num).toDouble(),
       comment: map['comment'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      createdAt: parseFirestoreDate(map['createdAt'], field: 'createdAt'),
     );
   }
 }

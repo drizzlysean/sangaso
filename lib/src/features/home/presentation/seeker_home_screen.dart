@@ -190,7 +190,7 @@ class _CatGrid extends StatelessWidget {
     itemBuilder: (ctx, i) {
       final cat = _cats[i];
       return GestureDetector(
-        onTap: () => ctx.go('/search'),
+        onTap: () => _openSearch(ctx, cat),
         child: Container(
           decoration: BoxDecoration(color: i.isEven ? AppColors.primaryDim : AppColors.surfaceGrey, borderRadius: BorderRadius.circular(12)),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -204,6 +204,10 @@ class _CatGrid extends StatelessWidget {
   );
 }
 
+void _openSearch(BuildContext context, Map<String, Object> cat) {
+  context.go('/search?category=${Uri.encodeQueryComponent(cat['label'] as String)}');
+}
+
 class _CatRow extends StatelessWidget {
   static const _cats = SeekerHomeScreen._cats;
   @override
@@ -215,7 +219,7 @@ class _CatRow extends StatelessWidget {
     itemBuilder: (ctx, i) {
       final cat = _cats[i];
       return GestureDetector(
-        onTap: () => ctx.go('/search'),
+        onTap: () => _openSearch(ctx, cat),
         child: SizedBox(width: 66, child: Column(children: [
           Container(width: 52, height: 52, decoration: BoxDecoration(color: i.isEven ? AppColors.primaryDim : AppColors.surfaceGrey, borderRadius: BorderRadius.circular(13)),
             child: Icon(cat['icon'] as IconData, size: 22, color: i.isEven ? AppColors.primary : AppColors.text2)),

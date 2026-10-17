@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
-import '../../../models/user_model.dart';
+import '../../../services/auth_errors.dart';
+import '../../../services/email_verification_service.dart';
 
 
 class VerifyEmailScreen extends StatefulWidget {
@@ -25,7 +25,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-    _isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+    final verification = context.read<EmailVerificationService>();
+    _isEmailVerified = verification.currentEmailVerified;
     if (!_isEmailVerified) {
       _timer = Timer.periodic(
         const Duration(seconds: 3),
@@ -60,38 +61,38 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   Future<void> _checkEmailVerified() async {
-    await FirebaseAuth.instance.currentUser?.reload();
-    if (!mounted) return;
-    final emailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
-    
+    final verification = context.read<EmailVerificationService>();
     final authService = context.read<AuthService>();
     final user = authService.currentUserModel;
-    
+    final emailVerified = await verification.reloadAndCheckVerified();
+
+    if (!mounted) return;
     setState(() {
       _isEmailVerified = emailVerified;
     });
-    
+
     if (_isEmailVerified) {
       _timer?.cancel();
-      
+
       // Sync the verification status with Firestore
       if (user != null && !user.isVerified) {
         // Update Firestore to mark user as verified
         await authService.updateUser(
           user.copyWith(isVerified: true),
         );
-        
+
         // Give the router a moment to react to the update
         await Future.delayed(const Duration(milliseconds: 500));
       }
-      
+
       if (mounted) context.go('/home');
     }
   }
 
   Future<void> _resendVerificationEmail() async {
+    final verification = context.read<EmailVerificationService>();
     try {
-      await FirebaseAuth.instance.currentUser?.sendEmailVerification();
+      await verification.sendVerificationEmail();
       _startResendTimer();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +108,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(friendlyAuthError(e)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -184,7 +185,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        FirebaseAuth.instance.currentUser?.email ?? '',
+                        context.read<EmailVerificationService>().currentUserEmail ?? '',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppColors.primary,
                         ),
