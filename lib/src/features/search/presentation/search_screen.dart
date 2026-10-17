@@ -30,7 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final wide = kIsWeb && MediaQuery.of(context).size.width > 860;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
         title: SizedBox(
           height: 40,
@@ -133,15 +133,21 @@ class _ServiceCard extends StatelessWidget {
     onTap: () => context.push('/service/${s.id}'),
     child: Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Row(children: [
         Container(
           width: 56, height: 56,
           decoration: BoxDecoration(
-            color: AppColors.primaryDim, borderRadius: BorderRadius.circular(10),
+            color: AppColors.primaryDim,
+            border: Border.all(color: AppColors.primaryMid),
+            borderRadius: BorderRadius.circular(12),
             image: s.imageUrls.isNotEmpty ? DecorationImage(image: NetworkImage(s.imageUrls.first), fit: BoxFit.cover) : null,
           ),
-          child: s.imageUrls.isEmpty ? const Icon(Icons.construction_rounded, size: 24, color: AppColors.primary) : null,
+          child: s.imageUrls.isEmpty ? const Icon(Icons.construction_rounded, size: 24, color: AppColors.primaryDeep) : null,
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -152,9 +158,9 @@ class _ServiceCard extends StatelessWidget {
           Row(children: [
             Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(color: AppColors.primaryDim, borderRadius: BorderRadius.circular(4)),
-              child: Text(s.category, style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w600))),
+              child: Text(s.category, style: const TextStyle(fontSize: 10, color: AppColors.primaryDeep, fontWeight: FontWeight.w600))),
             const Spacer(),
-            Text('K${s.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+            Text('K${s.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primaryDeep)),
           ]),
         ])),
         const SizedBox(width: 8),
