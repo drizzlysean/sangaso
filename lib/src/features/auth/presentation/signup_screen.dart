@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/brand.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
@@ -52,20 +53,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 18), onPressed: () => context.pop()),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.canvas,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const SizedBox(height: 8),
-            Text('Create account', style: Theme.of(context).textTheme.displayMedium),
-            const SizedBox(height: 6),
-            Text('Join Sangaso to find or offer services', style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 32),
+            const SectionEyebrow('JOIN SANGASO'),
+            const SizedBox(height: 10),
+            const DisplayHeading(plain: 'Create account', accentItalic: 'and start.', size: 34),
+            const SizedBox(height: 28),
 
             TextFormField(controller: _nameCtrl, textInputAction: TextInputAction.next,
               decoration: const InputDecoration(labelText: 'Full name'),
@@ -104,13 +105,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ]),
             const SizedBox(height: 32),
 
-            SizedBox(width: double.infinity, height: 46,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _submit,
-                child: _loading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Create Account'),
-              ),
+            PrimaryButton(
+              label: 'Create Account',
+              trailingIcon: Icons.arrow_forward_rounded,
+              loading: _loading,
+              onPressed: _loading ? null : _submit,
             ),
             const SizedBox(height: 24),
 

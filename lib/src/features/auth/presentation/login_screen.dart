@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/brand.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/auth_errors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,38 +35,35 @@ class _LoginScreenState extends State<LoginScreen> {
       if (u == null) { context.go('/'); return; }
       context.go(u.role == UserRole.admin ? '/admin' : '/home');
     } catch (e) {
+      if (mounted) setState(() => _loading = false);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      return;
     }
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 52),
+              const SizedBox(height: 46),
 
-              // Logo mark
-              Container(
-                width: 52, height: 52,
-                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(14)),
-                child: ClipRRect(borderRadius: BorderRadius.circular(14),
-                  child: Image.asset('assets/images/logo_icon.png', fit: BoxFit.cover)),
-              ),
-              const SizedBox(height: 28),
+              const BrandLogoMark(size: 52, dark: true),
+              const SizedBox(height: 26),
 
-              Text('Welcome back', style: Theme.of(context).textTheme.displayMedium),
+              const SectionEyebrow('SIGN IN'),
+              const SizedBox(height: 10),
+              const DisplayHeading(plain: 'Welcome back', accentItalic: 'again.', size: 36),
               const SizedBox(height: 6),
               Text('Sign in to your account', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 36),
+              const SizedBox(height: 32),
 
               // Email
               TextFormField(
@@ -103,15 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              SizedBox(width: double.infinity, height: 46,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _submit,
-                  child: _loading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Sign In'),
-                ),
+              PrimaryButton(
+                label: 'Sign In',
+                trailingIcon: Icons.arrow_forward_rounded,
+                loading: _loading,
+                onPressed: _loading ? null : _submit,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 26),
 
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Text("Don't have an account?  ", style: Theme.of(context).textTheme.bodyMedium),

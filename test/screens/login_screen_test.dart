@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +41,7 @@ void main() {
     final auth = FakeAuthService();
     await tester.pumpWidget(loginHarness(auth: auth));
 
-    await tester.tap(find.byType(ElevatedButton));
+    await tester.tap(find.text('Sign In'));
     await tester.pump();
 
     expect(auth.signInCalled, isFalse);
@@ -60,7 +60,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Email address'), 'user@example.com');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'), 'secret123');
-    await tester.tap(find.byType(ElevatedButton));
+    await tester.tap(find.text('Sign In'));
     await tester.pumpAndSettle();
 
     expect(auth.lastSignInEmail, 'user@example.com');
@@ -81,7 +81,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Email address'), 'user@example.com');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'), 'secret123');
-    await tester.tap(find.byType(ElevatedButton));
+    await tester.tap(find.text('Sign In'));
     await tester.pumpAndSettle();
 
     expect(find.text('route-/home'), findsOneWidget);
@@ -99,7 +99,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Email address'), 'admin@example.com');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'), 'secret123');
-    await tester.tap(find.byType(ElevatedButton));
+    await tester.tap(find.text('Sign In'));
     await tester.pumpAndSettle();
 
     expect(find.text('route-/admin'), findsOneWidget);
