@@ -9,15 +9,34 @@ import '../../../services/review_service.dart';
 import '../../../models/review_model.dart';
 
 
-class ServiceDetailsScreen extends StatelessWidget {
+class ServiceDetailsScreen extends StatefulWidget {
   final String serviceId;
 
   const ServiceDetailsScreen({super.key, required this.serviceId});
 
+  @override
+  State<ServiceDetailsScreen> createState() => _ServiceDetailsScreenState();
+}
+
+class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
+  late Future<Map<String, dynamic>> _loadFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFuture = _loadServiceData();
+  }
+
+  void _retry() {
+    setState(() {
+      _loadFuture = _loadServiceData();
+    });
+  }
+
   Future<Map<String, dynamic>> _loadServiceData() async {
     final serviceDoc = await FirebaseFirestore.instance
         .collection('services')
-        .doc(serviceId)
+        .doc(widget.serviceId)
         .get();
 
     if (!serviceDoc.exists) {
@@ -45,7 +64,7 @@ class ServiceDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-      future: _loadServiceData(),
+      future: _loadFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -68,9 +87,16 @@ class ServiceDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    snapshot.error.toString(),
+                    "We couldn't load this service. It may have been removed "
+                    'or is temporarily unavailable.',
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _retry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Try again'),
                   ),
                 ],
               ),
@@ -136,7 +162,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                           // Price
                           Row(
                             children: [
-                              const Icon(Icons.attach_money, color: AppColors.primary, size: 28),
+                              const Icon(Icons.payments_outlined, color: AppColors.primary, size: 28),
                               const SizedBox(width: 8),
                               Text(
                                 'K${service.price.toStringAsFixed(2)}',
