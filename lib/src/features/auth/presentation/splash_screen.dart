@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.charcoal,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10)),
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 10)),
                   ],
                 ),
                 child: ClipRRect(
@@ -55,11 +55,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             FadeTransition(
               opacity: _fade,
               child: Column(children: [
-                Text('Sangaso', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.text1, letterSpacing: -0.5)),
+                Text('Sangaso', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.lightText, letterSpacing: -0.5)),
                 const SizedBox(height: 6),
-                Text('Find trusted services nearby', style: TextStyle(fontSize: 14, color: AppColors.text3, fontWeight: FontWeight.w400)),
+                Text('Find quality services nearby', style: TextStyle(fontSize: 14, color: AppColors.mutedDark, fontWeight: FontWeight.w400)),
                 const SizedBox(height: 40),
-                SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary.withOpacity(0.5))),
+                SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primarySoft)),
               ]),
             ),
           ],

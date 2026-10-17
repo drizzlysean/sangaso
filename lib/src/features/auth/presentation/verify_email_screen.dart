@@ -121,8 +121,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
+        backgroundColor: AppColors.canvas,
         title: const Text('Verify Email'),
         actions: [
           TextButton.icon(
@@ -143,17 +144,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.charcoal,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primarySoft, width: 1.5),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.mark_email_unread_outlined,
-                    size: 80,
-                    color: AppColors.primary,
+                    size: 72,
+                    color: AppColors.primarySoft,
                   ),
                 ),
-                const SizedBox(height: 32),
-                
+                const SizedBox(height: 30),
+
                 // Title
                 Text(
                   'Verify Your Email',
