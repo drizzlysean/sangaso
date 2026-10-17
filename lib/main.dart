@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'src/app.dart';
+import 'src/services/account_deletion_service.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/booking_service.dart';
 import 'src/services/email_verification_service.dart';
@@ -50,6 +51,7 @@ void main() async {
   final reviewService = FirebaseReviewService();
   final serviceService = ServiceService();
   final emailVerificationService = FirebaseAuthEmailVerificationService();
+  final accountDeletionService = AccountDeletionService();
 
   runApp(
     MultiProvider(
@@ -61,6 +63,7 @@ void main() async {
         Provider<ServiceService>(create: (_) => serviceService),
         Provider<NotificationService>.value(value: notificationService),
         Provider<EmailVerificationService>.value(value: emailVerificationService),
+        Provider<AccountDeletionService>.value(value: accountDeletionService),
       ],
       child: SangasoApp(
         authService: authService,

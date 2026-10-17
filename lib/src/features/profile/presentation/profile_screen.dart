@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/user_model.dart'; // CHANGED TO RELATIVE IMPORT
+import '../../../services/account_deletion_service.dart';
 import '../../../services/auth_service.dart'; // CHANGED TO RELATIVE IMPORT
 
 class ProfileScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _showImagePreview();
       }
     } catch (e) {
-      if (mounted) _showErrorSnackbar('Failed to pick image: $e');
+      if (mounted) _showErrorSnackbar('Could not open the camera or gallery.');
     }
   }
 
@@ -954,9 +955,232 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: 28),
+
+            // Sign out
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: authService.signOut,
+                icon: const Icon(Icons.logout_rounded, size: 20),
+                label: const Text(
+                  'Sign Out',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Danger zone — account deletion
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: _confirmDeleteAccount,
+                icon: const Icon(Icons.delete_forever_outlined, size: 20),
+                label: const Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              ' Deletes your Sangaso account immediately. Requires your password to confirm.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.5,
+                color: textSecondary,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var understood = false;
+    bool busy = false;
+    String? errorText;
+    final authService = context.read<AuthService>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void setBusy(bool value) => setDialogState(() => busy = value);
+
+          Future<void> onDelete() async {
+            if (!(formKey.currentState?.validate() ?? false)) return;
+            if (!understood) {
+              setDialogState(() =>
+                  errorText = 'Please confirm you understand this is permanent.');
+              return;
+            }
+            setBusy(true);
+            try {
+              final result =
+                  await context.read<AccountDeletionService>().deleteAccount(
+                        password: passwordController.text,
+                      );
+              setDialogState(() => busy = false);
+              if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+              if (result.summary == 'DELETED_WITH_REMNANTS') {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Account deleted. Some message and booking history will be removed from our servers soon.'),
+                    backgroundColor: AppColors.charcoal,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            } on FirebaseAuthException catch (e) {
+              setBusy(false);
+              setDialogState(() {
+                errorText = switch (e.code) {
+                  'invalid-credential' ||
+                  'wrong-password' ||
+                  'user-not-found' =>
+                    'Incorrect password. Please try again.',
+                  'too-many-requests' =>
+                    'Too many attempts. Please wait a moment and try again.',
+                  'network-request-failed' =>
+                    'Network problem. Please check your connection.',
+                  _ => 'Your account could not be deleted right now. '
+                      'Please try again later.',
+                };
+              });
+            } catch (_) {
+              setBusy(false);
+              setDialogState(() =>
+                  errorText = 'Your account could not be deleted right now. '
+                      'Please try again later.');
+            }
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text('Delete Account',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This permanently deletes your Sangaso account and profile '
+                    "right now. It cannot be undone. Your service listings "
+                    'will be removed.',
+                    style: TextStyle(fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.password],
+                    validator: (value) =>
+                        (value == null || value.isEmpty) ? 'Enter your password' : null,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm your password',
+                      labelStyle: const TextStyle(fontSize: 14),
+                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      filled: true,
+                      fillColor: AppColors.primaryDim,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  CheckboxListTile(
+                    value: understood,
+                    activeColor: AppColors.error,
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: const Text(
+                      'I understand this is permanent',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        understood = value ?? false;
+                        errorText = null;
+                      });
+                    },
+                  ),
+                  if (errorText != null)
+                    Text(
+                      errorText!,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.error, height: 1.4),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                ),
+                onPressed: busy ? null : onDelete,
+                child: busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Delete Account'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await authService.signOut();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your account has been deleted.'),
+            backgroundColor: AppColors.charcoal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        context.go('/login');
+      }
+    }
   }
 }
