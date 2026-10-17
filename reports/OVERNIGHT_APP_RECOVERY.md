@@ -173,3 +173,61 @@ Firebase app.
   build successfully.
 - The signed, validated `1.0.2+3` AAB targeting SDK 36 is ready for the owner to upload to the
   internal testing track; no Play Store release has happened, and nothing was published.
+
+------------------------------------------------------------------------
+## Session 2 (Oct 17, morning): final brand alignment + functional validation
+
+Source verification: branch ecovery/unified-design-2026-10-17 clean at
+9792ec5; the AAB from the overnight run was re-verified independently —
+rtifacts/app-release.aab SHA-256 recomputed as
+dca22173e55094d8748a5ba8556be93e2c075a450ea459b740055c5d56bfe348
+(exact match; artifact produced by run 39007126737 from commit 9356d6c).
+
+Work completed this session (all pushed; see git log):
+
+1. Multi-step onboarding in WelcomeScreen - five pages (discover, compare,
+   book and chat, become a provider, get started) with page indicator dots,
+   Continue link, Skip intro control and the persistent Get started / How
+   Sangaso works actions. Existing brand widgets reused; no fabricated
+   content (claims mirror the recovered website copy).
+2. Booking flow rebrand - BookingScreen moved off the off-brand
+   amber/blue palette onto shared tokens; raw Error:  snackbar replaced
+   with friendly copy; corrupted separator char in the step subtitle fixed.
+3. Humanized booking status labels in list and details screens.
+4. Service details error state - honest "couldn't load this service"
+   message with a Retry button instead of dumping Exception: ....
+5. Account self-deletion (was missing entirely):
+   - New AccountDeletionService (re-auth with password, deletes owned
+     service listings + profile doc + the Firebase Auth account NOW;
+     reports surviving records truthfully instead of claiming a clean
+     platform-wide wipe).
+   - Profile screen: Sign Out button + Delete Account danger-zone entry
+     with password re-confirm dialog, explicit "I understand this is
+     permanent" checkbox, mapped Firebase error messages.
+6. Booking service: stable idempotency key (RFC-4122 URL-namespace UUID v5
+   of seeker+provider+slot+address). An identical retry returns the
+   existing open booking instead of creating a duplicate and re-spamming
+   the provider notification.
+7. Messaging: Firestore seam + sender-party guard (senderId must be the
+   booking seeker or provider) + empty-message guard; truncated preview in
+   the recipient notification.
+8. Reviews: Firestore seam + 1..5 rating validation.
+9. Admin service: Firestore seam + platform stats/KYC/search coverage.
+10. Web crash fix: useEmulators no longer touches dart:io
+    Platform.environment on web (web boots instead of crashing; opt-in on
+    web is via --dart-define only).
+11. Emulator flag regression test (defaults OFF, production untouched).
+12. Lint sweep: unreadable warnings cleared; analyzer now 0 errors /
+    0 warnings (222 informational items, mostly withOpacity deprecations).
+
+Test suite: 45 -> 69 tests, all passing (new: account deletion service,
+booking service incl. idempotent retry, messaging incl. party guard,
+reviews incl. rating bounds, admin workflows incl. KYC and stats,
+emulator flag). Added dev-only fakes: firebase_auth_mocks,
+fake_cloud_firestore.
+
+Baseline rebuilt on 1.0.3+4: web OK, app-debug.apk OK (versionCode 4,
+versionName 1.0.3 confirmed via aapt), git diff --check clean.
+
+Deferred: device-testing round needs the owner's phone for wireless ADB
+pairing; internal-testing upload needs the owner's Play Console session.
