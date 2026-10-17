@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/booking_service.dart';
@@ -24,19 +25,16 @@ class _BookingScreenState extends State<BookingScreen> {
   bool _isLoading = false;
   UserModel? _provider;
 
-  // Updated orange theme colors (replacing green with orange)
-  static const Color primaryOrange = Color(0xFFF59E0B); // Main orange
-  static const Color accentBlue = Color(0xFF3B82F6); // Blue accent
-  static const Color deepOrange =
-      Color(0xFFD97706); // Darker orange for contrast
-  static const Color deepBlue = Color(0xFF2563EB); // Darker blue for contrast
-  static const Color lightOrange = Color(0xFFFEF3C7); // Light orange
-  static const Color lightBlue = Color(0xFFDBEAFE); // Light blue
-  static const Color borderColor = Color(0xFFE5E7EB); // Soft gray border
-  static const Color textPrimary = Color(0xFF111827); // Dark gray for text
-  static const Color textSecondary = Color(0xFF6B7280); // Medium gray
-  static const Color surfaceColor = Color(0xFFF9FAFB); // Light background
-  static const Color errorRed = Color(0xFFEF4444); // For error states
+  // Sangaso brand palette (shared design tokens)
+  static const Color primaryOrange = AppColors.primary;
+  static const Color accentDeep = AppColors.primaryDeep;
+  static const Color deepOrange = AppColors.primaryDeep;
+  static const Color lightOrange = AppColors.primaryDim;
+  static const Color borderColor = AppColors.border;
+  static const Color textPrimary = AppColors.text1;
+  static const Color textSecondary = AppColors.text2;
+  static const Color surfaceColor = AppColors.canvas;
+  static const Color errorRed = AppColors.error;
 
   @override
   void initState() {
@@ -116,7 +114,9 @@ class _BookingScreenState extends State<BookingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: const Text(
+              "We couldn't submit your booking. Please check your connection and try again.",
+            ),
             backgroundColor: errorRed,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -173,7 +173,7 @@ class _BookingScreenState extends State<BookingScreen> {
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
                 primary: primaryOrange,
-                secondary: accentBlue,
+                secondary: accentDeep,
               ),
         ),
         child: Stepper(
@@ -238,7 +238,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       onPressed: _isLoading ? null : details.onStepContinue,
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            _currentStep == 2 ? accentBlue : primaryOrange,
+                            _currentStep == 2 ? accentDeep : primaryOrange,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -246,7 +246,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         ),
                         elevation: 2,
                         shadowColor: _currentStep == 2
-                            ? accentBlue.withOpacity(0.3)
+                            ? accentDeep.withOpacity(0.3)
                             : primaryOrange.withOpacity(0.3),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -336,7 +336,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               data: Theme.of(context).copyWith(
                                 colorScheme: ColorScheme.light(
                                   primary: primaryOrange,
-                                  secondary: accentBlue,
+                                  secondary: accentDeep,
                                   surface: Colors.white,
                                 ),
                                 dialogBackgroundColor: Colors.white,
@@ -353,7 +353,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       icon: Icons.access_time_outlined,
                       label: 'Time',
                       value: _selectedTime.format(context),
-                      color: accentBlue,
+                      color: accentDeep,
                       onTap: () async {
                         final time = await showTimePicker(
                           context: context,
@@ -363,7 +363,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               data: Theme.of(context).copyWith(
                                 colorScheme: ColorScheme.light(
                                   primary: primaryOrange,
-                                  secondary: accentBlue,
+                                  secondary: accentDeep,
                                   surface: Colors.white,
                                 ),
                                 dialogBackgroundColor: Colors.white,
@@ -455,7 +455,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
-                  color: _currentStep >= 2 ? accentBlue : textSecondary,
+                  color: _currentStep >= 2 ? accentDeep : textSecondary,
                 ),
               ),
               content: Container(
@@ -508,7 +508,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       Icons.attach_money_outlined,
                       'Price',
                       'K${_provider!.basePrice?.toStringAsFixed(2) ?? "0.00"}',
-                      accentBlue,
+                      accentDeep,
                     ),
                     const Divider(height: 32, color: borderColor, thickness: 1),
                     _buildReviewRow(
