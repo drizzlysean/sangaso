@@ -3,7 +3,12 @@ import '../models/user_model.dart';
 import '../models/booking_model.dart';
 
 class AdminService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  AdminService({FirebaseFirestore? firestore}) : _firestoreOverride = firestore;
+
+  final FirebaseFirestore? _firestoreOverride;
+
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   // Get all users with optional role filter
   Stream<List<UserModel>> getAllUsers({UserRole? roleFilter}) {
