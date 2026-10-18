@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sangaso/src/models/user_model.dart';
 import 'package:sangaso/src/services/auth_service.dart';
@@ -13,14 +14,17 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
     Object? Function()? googleSignInError,
     this.lastGoogleUserDisplayName,
     DelayedValue<UserModel?>? signInResult,
+    String? resetErrorMessage,
   })  : _signInError = signInError,
         _signUpError = signUpError,
         _googleSignInError = googleSignInError,
         _signInResult = signInResult,
+        _resetError = resetErrorMessage,
         _isInitialized = true;
 
   final Object? Function()? _signInError;
   final Object? Function()? _signUpError;
+  final String? _resetError;
   final DelayedValue<UserModel?>? _signInResult;
 
   @override UserModel? currentUserModel;
@@ -121,7 +125,14 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
   }
 
   @override
-  Future<void> resetPassword(String email) async {}
+  List<String> resetCalls = [];
+
+  @override
+  Future<void> resetPassword(String email) async {
+    final code = _resetError;
+    if (code != null) throw FirebaseAuthException(code: code);
+    resetCalls.add(email);
+  }
 
   bool updateUserCalled = false;
   bool throwOnUpdateUser = false;

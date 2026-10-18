@@ -203,7 +203,7 @@ class _ForgotDialogState extends State<_ForgotDialog> {
           if (_ctrl.text.trim().isEmpty) return;
           setState(() => _loading = true);
           try {
-            await FirebaseAuth.instance.sendPasswordResetEmail(email: _ctrl.text.trim());
+            await context.read<AuthService>().resetPassword(_ctrl.text.trim());
             if (mounted) { Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reset email sent')));
             }

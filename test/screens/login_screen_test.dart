@@ -116,4 +116,31 @@ void main() {
     expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
     expect(find.byIcon(Icons.visibility_off_outlined), findsNothing);
   });
+
+  testWidgets('password reset dialog calls resetPassword and confirms',
+      (tester) async {
+    final auth = FakeAuthService();
+    await tester.pumpWidget(loginHarness(auth: auth));
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Email'), 'forgot@test.sangaso.com');
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+    expect(auth.resetCalls, contains('forgot@test.sangaso.com'));
+    expect(find.text('Reset email sent'), findsOneWidget);
+  });
+
+  testWidgets('password reset failure shows friendly error', (tester) async {
+    final auth = FakeAuthService(resetErrorMessage: 'invalid-email');
+    await tester.pumpWidget(loginHarness(auth: auth));
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Email'), 'not-an-email');
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('FirebaseAuthException'), findsNothing);
+    expect(find.byType(SnackBar), findsOneWidget);
+  });
 }
