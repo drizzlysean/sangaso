@@ -263,3 +263,19 @@ META-INF UPLOAD.SF/UPLOAD.RSA present, and the four new branding assets
 byte-size-confirmed inside flutter_assets. Superseded builds recorded in
 PLAY_RELEASE_CHECKLIST.md. NOT uploaded to Play -- owner asked to
 confirm the new branding first.
+
+## Addendum 4 -- FINAL POLISH complete, 1.0.3+5 rebuilt (2026-10-18)
+
+Commit 29c005a (polish) + 107e763 (version bump) pushed to
+recovery/unified-design-2026-10-17. CI run 39121956994 produced
+app-release.aab 47,040,076 B, SHA-256
+4a427b1a440b155d56a89ce159d257e353aaa9bbdf6870429bb7b01e80dc7954,
+com.sangaso.app 1.0.3 (5), minSdk 24 / targetSdk 36, upload-key signed,
+branding byte-verified. 79/79 tests, analyze clean.
+
+Polish delivered: consent gate (email+Google, signup+login), Google
+two-phase sign-in, multi-step onboarding (About you / Your area /
+Your business | heard-about) with heardAbout persisted, FCM token
+lifecycle + foreground display + tap routing, router redirect
+hardening. Details + unresolved items in PLAY_RELEASE_CHECKLIST.md and
+FINAL_VALIDATION_REPORT.md Session 4 addendum.

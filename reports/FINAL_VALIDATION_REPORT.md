@@ -91,3 +91,43 @@ a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5,
 com.sangaso.app 1.0.3 (4), minSdk 24 / targetSdk 36, UPLOAD-signed.
 Branding assets byte-verified inside the bundle. Play upload remains
 owner-gated until the branding is confirmed.
+
+## Session 4 addendum -- FINAL POLISH + release rebuild (2026-10-18, commits 29c005a / 107e763)
+
+Owner-ordered polish before Play upload. All completed (see
+PLAY_RELEASE_CHECKLIST.md "Final-polish record"):
+
+- Rebuilt bundle: CI run 39121956994, commit 107e763 (head), version
+  1.0.3+5 (versionCode bumped past the branded +4 so an already-written
+  artifact row can never collide on Play). app-release.aab
+  47,040,076 B, SHA-256
+  4a427b1a440b155d56a89ce159d257e353aaa9bbdf6870429bb7b01e80dc7954,
+  package com.sangaso.app, minSdk 24 / targetSdk 36,
+  META-INF/UPLOAD.SF+RSA (upload key), branding asset byte-verified
+  (base/assets/flutter_assets/assets/images/logo_icon.png, 55,631 B).
+  This supersedes 1.0.3+4 runs 39028406795 and 39019071100.
+- Tests: 79/79 pass (was 69; +10 new lifecycle/consent/onboarding tests
+  in test/lifecycle_test.dart). Analyze: 0 errors, 0 warnings.
+- Router redirect hardening: null-safe completion check + loop guard
+  for the profile-setup redirect.
+- Consent gate (signup + login, email and Google paths), Google
+  two-phase sign-in, multi-step onboarding with heardAbout (seeker),
+  FCM token lifecycle + foreground display + tap routing wired in
+  app.dart state (permission requested post-verified-login).
+
+Unresolved, truthfully stated:
+1. LEGAL PAGES NOT LIVE: https://www.sangaso.com/?page=terms|privacy|
+   delete-account all return the SPA landing page (identical 170,622 B
+   body, no legal content); /terms.php 404. The website multi-page
+   patch is NOT deployed (website session owns deploy). Until it is,
+   in-app legal links lead to the wrong content. Coordinated release
+   blocker - do not describe the links as working in store listing.
+2. FCM end-to-end delivery still requires a trusted backend (owner-
+   gated; app side is ready to consume).
+3. Booking review price uses provider basePrice (K1000) while the
+   service card showed K1300 - flag for owner decision.
+4. Device QA paused mid-flow (owner request); booking Confirm tap
+   navigation never re-verified after screen rotation/lock issues.
+   Redmi (USB, mjtkzp7h49onqkz5) available for the next QA pass.
+5. Owner login password appeared in chat (2026-10-17). Recommend
+   rotating that Google account password.

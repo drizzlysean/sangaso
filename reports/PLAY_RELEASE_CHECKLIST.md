@@ -1,39 +1,58 @@
-# Play Release Checklist — internal testing (2026-10-17)
+# Play Release Checklist — internal testing (updated 2026-10-18)
 
 ## Artifact facts (verify before every submission)
 
 | Item | Value | How to re-verify |
 | --- | --- | --- |
-| Source commit (this build) | run `39028406795`, branch `recovery/unified-design-2026-10-17`, head `a97553b` (includes authentic branding) | `gh run view 39028406795 -R drizzlysean/sangaso --json headSha` |
+| Source commit (this build) | run `39121956994`, branch `recovery/unified-design-2026-10-17`, head `107e763` (includes FINAL POLISH: consent gate, Google two-phase sign-in, multi-step onboarding, FCM wiring) | `gh run view 39121956994 -R drizzlysean/sangaso --json headSha` |
 | File | `app-release.aab` from artifact `sangaso-release-aab` (kept in untracked `artifacts/`) | Actions page → artifacts |
-| SHA-256 | `a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5` | `(Get-FileHash artifacts\app-release.aab -Algorithm SHA256).Hash.ToLower()` |
-| Size | 46,387,694 bytes | file properties |
+| SHA-256 | `4a427b1a440b155d56a89ce159d257e353aaa9bbdf6870429bb7b01e80dc7954` | `(Get-FileHash app\artifacts\app-release.aab -Algorithm SHA256).Hash.ToLower()` |
+| Size | 47,040,076 bytes | file properties |
 | Package | `com.sangaso.app` | bundletool dump manifest |
-| Version name / code | **1.0.3** / **4** | bundletool dump manifest; pubspec.yaml |
+| Version name / code | **1.0.3** / **5** | bundletool dump manifest; pubspec.yaml |
 | minSdk / targetSdk | 24 / **36** (Android 16 — Play policy target since Aug 2026) | bundletool dump manifest |
 | Signing | upload key (keystore from `UPLOAD_KEYSTORE_BASE64`), NOT a new key | `META-INF/UPLOAD.SF` + `UPLOAD.RSA` entries verified |
 | Emulator safety | release built WITHOUT `--dart-define=SANGASO_USE_EMULATORS` | workflow yml contains no dart-define; `useEmulators` off by test |
-| Branding | authentic logo; preserved original at `brand/logo-source.png`; regenerated `logo_icon.png`, `app_icon.png` + adaptive layers + web/windows icons; new asset sizes confirmed inside the AAB | zip listing of app-release.aab |
+| Branding | authentic logo; preserved original at `brand/logo-source.png`; launcher icon + adaptive layers + web/windows icons; asset byte-confirmed inside this AAB (`logo_icon.png` 55,631 B) | zip listing of app-release.aab |
 
-Re-verify commands on this machine (PowerShell):
-
-```powershell
-# hash
-(Get-FileHash app-release.aab -Algorithm SHA256).Hash.ToLower()
-# manifest (bundletool 1.18.3 at artifacts/)
-java -jar artifacts\bundletool.jar dump manifest --bundle=app-release.aab
-# test-tp for install on a device (optional)
-java -jar artifacts\bundletool.jar build-apks --bundle=app-release.aab --output=temp.apks
-```
-
-Superseded artifacts (do NOT submit — placeholder branding):
-- `1.0.2+3`, run `39007126737`, SHA-256 `dca22173e55094d8748a5ba8556be93e2c075a450ea459b740055c5d56bfe348`
+Superseded artifacts (do NOT submit):
+- `1.0.3+4`, run `39028406795`, SHA-256 `a1be34b116692c974ba88c783509637dfe135e853848650f4ecb659b4ce1b7e5` (branded but pre-polish; superseded by +5)
 - `1.0.3+4` pre-branding, run `39019071100`, SHA-256 `b012bca420debb79dc80d2f1f3a8fee191dc4672177e844c427d9bd9de26a637`
+- `1.0.2+3`, run `39007126737`, SHA-256 `dca22173e55094d8748a5ba8556be93e2c075a450ea459b740055c5d56bfe348`
+
+## Final-polish record (commit `29c005a`, tests 79/79)
+
+- Visible consent gate: signup + login Google flows require an explicit,
+  unchecked-by-default Terms + Privacy acceptance before account
+  creation; consent map (acceptedAt/terms/privacy) persisted on the
+  users document at signUp (`acceptedConsent`).
+- Google two-phase: `signInWithGoogle` checks an existing account first
+  (returning users skip consent); new accounts return
+  `GoogleSignInOutcome.consentRequired` and are only created by
+  `completeGoogleConsent()`.
+- Multi-step onboarding: `profile_setup_screen.dart` rewritten as
+  Step 1 About you → Step 2 Your area → Step 3 Your business (provider)
+  / How did you hear about Sangaso (seeker, `heardAbout` on UserModel,
+  nullable + legacy-safe); per-step validation; save-failure retry kept.
+  NOTE: "Skip for now" removed - the router guard requires completion.
+- FCM: token lifecycle (save on verified login, remove on sign-out,
+  onTokenRefresh re-persist), foreground SnackBar display, tap routing
+  (`type`+`relatedId` → /chat/:id or /booking/:id, /home fallback).
+- Known follow-ups (documented, not release-blocking for internal):
+  real FCM delivery still needs the trusted backend (Cloud Functions +
+  HTTP v1); the app consumes but does not yet send FCM.
+- Booking price discrepancy (QA on device): service card showed K1300,
+  booking review showed K1000.00 - booking_screen.dart uses
+  `_provider!.basePrice`, not the service price. Needs a data/design
+  decision, tracked for the next session.
+- Credential hygiene: `seantinashenyakutira@gmail.com` password was
+  shared in chat on 2026-10-17; recommend rotating it.
 
 ## Pre-submission gates
 
-1. **Play Console version codes** — check the highest versionCode Play
-   already has (owner's console). If 4 was previously consumed, rebuild:
+1. **Play Console version codes** — this build is 1.0.3+**5**;
+   confirm Play's highest code < 5 before upload (owner's console).
+   If 5 was consumed for another upload, rebuild:
    `gh workflow run "Build APK" -R drizzlysean/sangaso --ref recovery/unified-design-2026-10-17 -f build_number=<n+1>` and re-verify.
 2. **Brand asset** — RESOLVED: authentic logo from the recovered
    website is now the app's branding (owner-ordered swap, commit
