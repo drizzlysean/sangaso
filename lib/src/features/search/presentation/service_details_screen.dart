@@ -375,7 +375,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/book/${service.providerId}'),
+                      onPressed: () => context.push(
+                          '/book/${service.providerId}?serviceId=${service.id}'),
                       icon: const Icon(Icons.calendar_today),
                       label: const Text('Book Now'),
                       style: ElevatedButton.styleFrom(

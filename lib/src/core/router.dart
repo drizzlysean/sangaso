@@ -101,7 +101,13 @@ if (user == null) {
       GoRoute(path: '/services', builder: (context, state) => const MyServicesScreen()),
       GoRoute(path: '/services/add', builder: (context, state) => const AddEditServiceScreen()),
       GoRoute(path: '/services/edit/:id', builder: (context, state) => AddEditServiceScreen(serviceId: state.pathParameters['id']!)),
-      GoRoute(path: '/book/:providerId', builder: (context, state) => BookingScreen(providerId: state.pathParameters['providerId']!)),
+      GoRoute(
+        path: '/book/:providerId',
+        builder: (context, state) => BookingScreen(
+          providerId: state.pathParameters['providerId']!,
+          serviceId: state.uri.queryParameters['serviceId'],
+        ),
+      ),
       GoRoute(path: '/chat/:bookingId', builder: (context, state) => ChatScreen(bookingId: state.pathParameters['bookingId']!)),
       GoRoute(path: '/booking/:id', builder: (context, state) => BookingDetailsScreen(bookingId: state.pathParameters['id']!)),
     ],

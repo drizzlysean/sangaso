@@ -22,6 +22,8 @@ class NoopBookingService implements BookingService {
     required String address,
     required double price,
     String? specialInstructions,
+    String? serviceId,
+    String? serviceName,
   }) =>
       throw UnimplementedError('not used by the splash smoke test');
 

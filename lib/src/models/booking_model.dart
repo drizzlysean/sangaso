@@ -40,6 +40,11 @@ class BookingModel {
   final DateTime? startedAt;
   final DateTime? completedAt;
 
+  // Origin service (nullable: legacy bookings predate service references
+  // and were created from the provider's profile price).
+  final String? serviceId;
+  final String? serviceName;
+
   BookingModel({
     required this.id,
     required this.seekerId,
@@ -60,6 +65,8 @@ class BookingModel {
     this.acceptedAt,
     this.startedAt,
     this.completedAt,
+    this.serviceId,
+    this.serviceName,
   });
 
   Map<String, dynamic> toMap() {
@@ -85,6 +92,8 @@ class BookingModel {
       'completedAt': completedAt != null
           ? Timestamp.fromDate(completedAt!)
           : null,
+      'serviceId': serviceId,
+      'serviceName': serviceName,
     };
   }
 
@@ -112,6 +121,8 @@ class BookingModel {
       acceptedAt: parseFirestoreDateOrNull(map['acceptedAt'], field: 'acceptedAt'),
       startedAt: parseFirestoreDateOrNull(map['startedAt'], field: 'startedAt'),
       completedAt: parseFirestoreDateOrNull(map['completedAt'], field: 'completedAt'),
+      serviceId: map['serviceId'],
+      serviceName: map['serviceName'],
     );
   }
 }

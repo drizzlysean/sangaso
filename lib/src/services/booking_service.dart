@@ -14,6 +14,8 @@ abstract class BookingService {
     required String address,
     required double price,
     String? specialInstructions,
+    String? serviceId,
+    String? serviceName,
   });
 
   Stream<List<BookingModel>> getBookingsForUser(String userId, bool isProvider);
@@ -43,6 +45,8 @@ class FirebaseBookingService implements BookingService {
     required String address,
     required double price,
     String? specialInstructions,
+    String? serviceId,
+    String? serviceName,
   }) async {
     // Fetch seeker and provider details
     final seekerDoc = await _firestore.collection('users').doc(seekerId).get();
@@ -102,6 +106,8 @@ class FirebaseBookingService implements BookingService {
       providerPhone: providerData['phoneNumber'],
       providerEmail: providerData['email'],
       specialInstructions: specialInstructions,
+      serviceId: serviceId,
+      serviceName: serviceName,
     );
 
     await _firestore.collection('bookings').doc(id).set(booking.toMap());

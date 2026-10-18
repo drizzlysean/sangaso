@@ -4,14 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../models/service_model.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/booking_service.dart';
+import '../../../services/service_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
 
-  const BookingScreen({super.key, required this.providerId});
+  /// Optional origin service. When present, the booking carries the
+  /// service (id, name, price) instead of the provider's profile
+  /// starting price.
+  final String? serviceId;
+
+  const BookingScreen({super.key, required this.providerId, this.serviceId});
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
@@ -24,6 +31,7 @@ class _BookingScreenState extends State<BookingScreen> {
   final _addressController = TextEditingController();
   bool _isLoading = false;
   UserModel? _provider;
+  ServiceModel? _service;
 
   // Sangaso brand palette (shared design tokens)
   static const Color primaryOrange = AppColors.primary;
@@ -51,6 +59,19 @@ class _BookingScreenState extends State<BookingScreen> {
       setState(() {
         _provider = UserModel.fromMap(doc.data()!);
       });
+    }
+    // Load the origin service so the booking carries the tapped
+    // service's price rather than the provider's starting price.
+    if (widget.serviceId != null) {
+      try {
+        final service = await ServiceService().getService(widget.serviceId!);
+        if (service != null && mounted) {
+          setState(() => _service = service);
+        }
+      } catch (_) {
+        // Booking continues with the provider's starting price if the
+        // service lookup fails; never block the funnel here.
+      }
     }
   }
 
@@ -91,10 +112,12 @@ class _BookingScreenState extends State<BookingScreen> {
       await context.read<BookingService>().createBooking(
             seekerId: user.id,
             providerId: widget.providerId,
-            serviceType: _provider!.category ?? 'General',
+            serviceType: _service?.name ?? _provider!.category ?? 'General',
             scheduledTime: scheduledTime,
             address: _addressController.text.trim(),
-            price: _provider!.basePrice ?? 0,
+            price: _service?.price ?? _provider!.basePrice ?? 0,
+            serviceId: _service?.id,
+            serviceName: _service?.name,
           );
 
       if (mounted) {
@@ -495,7 +518,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     _buildReviewRow(
                       Icons.work_outline,
                       'Service Type',
-                      _provider!.category ?? 'General Service',
+                      _service?.name ?? _provider!.category ?? 'General Service',
                       primaryOrange,
                     ),
                     _buildReviewRow(
@@ -506,8 +529,10 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     _buildReviewRow(
                       Icons.attach_money_outlined,
-                      'Price',
-                      'K${_provider!.basePrice?.toStringAsFixed(2) ?? "0.00"}',
+                      _service != null ? 'Price' : 'Starting price',
+                      _service != null
+                          ? 'K${_service!.price.toStringAsFixed(2)}'
+                          : 'K${_provider!.basePrice?.toStringAsFixed(2) ?? "0.00"}',
                       accentDeep,
                     ),
                     const Divider(height: 32, color: borderColor, thickness: 1),

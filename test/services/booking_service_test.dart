@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sangaso/src/models/booking_model.dart';
@@ -81,6 +82,56 @@ void main() {
       expect(notification.type.name, 'bookingRequest');
       expect(notification.relatedId, id);
       expect(notification.isRead, isFalse);
+    });
+
+    test('createBooking persists the origin service and its price',
+        () async {
+      final bookingService = FirebaseBookingService(
+        notificationService: FirebaseNotificationService(firestore: firestore),
+        firestore: firestore,
+      );
+
+      final id = await bookingService.createBooking(
+        seekerId: 'seeker-1',
+        providerId: 'provider-1',
+        serviceType: 'Pine Plumbing Repair',
+        scheduledTime: DateTime(2026, 10, 20, 9, 30),
+        address: '12 Nakonde Road',
+        price: 1300,
+        serviceId: 'svc-42',
+        serviceName: 'Pine Plumbing Repair',
+      );
+
+      final booking = BookingModel.fromMap(
+          (await firestore.collection('bookings').doc(id).get()).data()!);
+      // The listed service price (K1,300) flows into the booking even
+      // when the provider's profile starting price differs.
+      expect(booking.price, 1300);
+      expect(booking.serviceId, 'svc-42');
+      expect(booking.serviceName, 'Pine Plumbing Repair');
+      expect(booking.serviceType, 'Pine Plumbing Repair');
+    });
+
+    test('legacy bookings without service references remain readable',
+        () async {
+      await firestore.collection('bookings').doc('legacy-1').set({
+        'id': 'legacy-1',
+        'seekerId': 'seeker-1',
+        'providerId': 'provider-1',
+        'serviceType': 'Plumbing',
+        'scheduledTime':
+            Timestamp.fromDate(DateTime(2026, 10, 20, 9, 30)),
+        'address': '12 Nakonde Road',
+        'price': 1000,
+        'status': 'requested',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 1, 1)),
+      });
+      final booking = BookingModel.fromMap(
+          (await firestore.collection('bookings').doc('legacy-1').get())
+              .data()!);
+      expect(booking.serviceId, isNull);
+      expect(booking.serviceName, isNull);
+      expect(booking.price, 1000);
     });
 
     test('status transitions write timestamps and notify the seeker',
