@@ -131,3 +131,65 @@ Unresolved, truthfully stated:
    Redmi (USB, mjtkzp7h49onqkz5) available for the next QA pass.
 5. Owner login password appeared in chat (2026-10-17). Recommend
    rotating that Google account password.
+
+## Session 5 addendum -- price bug fixed, release candidate 1.0.3+6 (2026-10-18)
+
+Owner mission: PRICE BUG + DEVICE QA + PLAY READINESS.
+Branch recovery/unified-design-2026-10-17; HEAD e4a9037 (code 9d217bb).
+
+1. PRICE MISMATCH (K1,300 vs K1,000) - RESOLVED, not by swapping
+   numbers: booking_screen created bookings from the provider profile
+   (category + basePrice = K1,000) and never referenced the tapped
+   service (K1,300); BookingModel had no service field. Fix: booking
+   now originates from the actual service (nullable serviceId/
+   serviceName persisted; Book Now passes serviceId; BookingScreen
+   loads it and books its price; honest "Starting price" label when
+   no service is attached). Tests: +3 (service-price persistence,
+   legacy doc compatibility). NEVER touched production bookings.
+2. Password-reset dialog was bypassing auth abstraction; routed
+   through AuthService (2 new tests).
+3. Full battery: 83/83 tests, flutter analyze 0 errors/0 warnings.
+4. Release candidate rebuilt on CI run 39153033573: app-release.aab
+   47,042,731 B, SHA-256
+   51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7,
+   com.sangaso.app 1.0.3 (6), minSdk 24/targetSdk 36, upload-key
+   signed, branding byte-verified. Superseded: 1.0.3+5 (run
+   39121956994, SHA 4a427b1a...) and all earlier bundles.
+5. SECURITY (no secrets reproduced here):
+   - Owner Gmail password was pasted into chat on 2026-10-17.
+     REQUIRED OWNER ACTION: rotate that Google account password and
+     enable 2-Step Verification (Accounts > Security > Change
+     password; then review myactivity.google.com password breach
+     alerts). Also rotate the Firebase project's app passwords/API
+     keys ONLY if they were shared (they were not).
+   - Production test accounts, reviewed read-only (no deletion
+     performed): qa.seeker.1017@qateam.test (unverified, unusable,
+     delete via Firebase Auth console or Admin SDK by owner - DONE
+     ONLY BY OWNER), rastaferi73@gmail.com (Google-backed provider
+     account loaded on the QA phone; keep as is), seantinashenyakutira
+     @gmail.com (real owner account; keep). No flag distinguishes QA
+     accounts from customers; recommend owner keeps using the
+     qa-seeker convention for any future test signups.
+6. WEBSITE COORDINATION (re-verified this session - NOT resolved):
+   live https://www.sangaso.com/?page=terms|privacy|delete-account
+   still serve the SPA landing page (no legal content) and /terms.php
+   is 404. The multi-page patch remains UNDEPLOYED. App links are
+   correct against the intended canonical routes; they must not be
+   described as working in store collateral until the website
+   session deploys them. Do not invent a Play Store public listing
+   URL or claim public availability - the app is NOT published.
+7. DEVICE QA: NOT re-run (phone offline all session; previous attempt
+   blocked by a YouTube PiP overlay stealing touches - nothing was
+   sent from WhatsApp). Unverified on device: photo upload, booking
+   Confirm navigation, Google consent dialog, notification routing,
+   logout + account deletion. These remain on the next QA pass.
+8. REMAINING CRITICAL BLOCKERS before any Play upload:
+   a. Legal pages live (website deploy, owner).
+   b. Device QA pass on the price-fix build.
+   c. Owner confirms highest submitted versionCode < 6 in Play
+      Console (1.0.3+5 was never confirmed uploaded; +6 chosen to be
+      safely above any possibility).
+   d. Google provider enablement + key SHA registration if the store
+      listing advertises Google sign-in.
+   e. FCM delivery backend (post-internal-testing; app consumes, no
+      sender exists yet).

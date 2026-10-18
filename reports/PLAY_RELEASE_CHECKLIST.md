@@ -92,3 +92,45 @@ The recovered website tree contains NO account-deletion request page.
 Google Play account-deletion policy alternatives (web flow or email
 route) still need the owner's decision; the in-app deletion path exists
 now. The website tree was not modified.
+
+## Session 5 addendum -- price-fix release candidate (2026-10-18)
+
+| Item | Value |
+| --- | --- |
+| Source commit | run `39153033573`, head `e4a9037` (code at `9d217bb`) |
+| Version | **1.0.3+6** (bumped from +5 so the superseded +5 can never collide on Play) |
+| SHA-256 | `51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7` |
+| Size | 47,042,731 bytes |
+| Signing / branding | UPLOAD.SF+RSA verified; logo_icon.png (55,631 B) byte-confirmed |
+| Tests | 83/83 pass (was 79/79: +2 booking-service-linkage tests, +2 password-reset tests, +legacy-doc test, +2 lifecycle earlier), analyze 0 errors/0 warnings |
+
+Superseded bundles (do NOT submit): all 1.0.3+4 builds, 1.0.2+3, and **1.0.3+5** (run `39121956994`, SHA `4a427b1a440b155d56a89ce159d257e353aaa9bbdf6870429bb7b01e80dc7954`, size 47,040,076 B).
+
+Price mismatch root cause + fix (code commit `6a03c1a`):
+- Root cause: the booking funnel dropped the selected service at
+  Book Now (/book/:providerId carried only providerId). Bookings were
+  created from the provider profile defaults - serviceType =
+  provider.category, price = provider.basePrice (K1,000) - while the
+  service card showed ServiceModel.price (K1,300). Not stale data, not
+  formatting: a schema gap (BookingModel had no service reference).
+- Correct amount: the tapped service price (the CTA is specific to
+  that service).
+- Fix: BookingModel gains nullable serviceId/serviceName (legacy docs
+  read as null); BookingService persists them; Book Now appends
+  serviceId as a route query param; BookingScreen loads the service
+  from Firestore and books its price (fallback to provider starting
+  price labeled honestly as "Starting price" if lookup fails).
+- Regression tests: createBooking persists origin service + price;
+  legacy bookings without service refs remain readable.
+
+Password-reset defect fixed (commit `9d217bb`): the Forgot-password
+dialog called FirebaseAuth directly, bypassing the AuthService seam;
+now uses AuthService.resetPassword (covered by 2 new tests).
+
+Truthful status of device QA: NOT re-run this session. The test phone
+(USB Redmi, serial mjtkzp7h49onqkz5) stayed offline all session; the
+previous attempt was disrupted by a YouTube picture-in-picture overlay
+hijacking touches (plus WhatsApp/LarkPlayer focus shifts). Nothing was
+sent from WhatsApp; media was paused. Unverified-on-device list:
+photo upload flow, booking Confirm navigation, Google sign-in consent
+dialog, notification tap routing, logout + account deletion.

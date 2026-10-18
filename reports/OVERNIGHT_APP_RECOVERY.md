@@ -279,3 +279,14 @@ Your business | heard-about) with heardAbout persisted, FCM token
 lifecycle + foreground display + tap routing, router redirect
 hardening. Details + unresolved items in PLAY_RELEASE_CHECKLIST.md and
 FINAL_VALIDATION_REPORT.md Session 4 addendum.
+
+## Addendum 5 -- price-fix release candidate 1.0.3+6 (2026-10-18)
+
+Price-root-cause fix (booking carries the actual service now),
+password-reset seam fix, 83/83 tests. Release candidate on CI run
+39153033573: SHA-256
+51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7,
+1.0.3+6, upload-key signed, branding verified. Supersedes 1.0.3+5.
+Device QA still pending (phone offline). Full details in
+FINAL_VALIDATION_REPORT.md Session 5 and PLAY_RELEASE_CHECKLIST.md
+Session 5.
