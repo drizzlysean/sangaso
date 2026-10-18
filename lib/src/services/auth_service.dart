@@ -6,18 +6,31 @@ import 'package:google_sign_in/google_sign_in.dart';
 // USE RELATIVE IMPORT INSTEAD OF PACKAGE IMPORT:
 import '../models/user_model.dart'; // This should work since both are in src folder
 
+/// Outcome of a Google sign-in attempt.
+enum GoogleSignInOutcome {
+  /// An existing account was signed in (returning user — no consent gate).
+  signedIn,
+
+  /// A brand-new Google account needs explicit consent before the
+  /// profile record is created. Call [AuthService.completeGoogleConsent]
+  /// after the user accepts the Terms and Privacy Notice.
+  consentRequired,
+}
+
 abstract class AuthService extends ChangeNotifier {
   Stream<UserModel?> get userChanges;
   UserModel? get currentUserModel;
   bool get isInitialized;
 
   Future<void> signIn(String email, String password);
-  Future<void> signInWithGoogle();
+  Future<GoogleSignInOutcome> signInWithGoogle();
+  Future<void> completeGoogleConsent();
   Future<void> signUp({
     required String email,
     required String password,
     required UserRole role,
     String? name,
+    bool acceptedConsent = false,
   });
   Future<void> signOut();
   Future<void> resetPassword(String email);
@@ -138,9 +151,48 @@ class FirebaseAuthService extends AuthService {
   }
 
   @override
-  Future<void> signInWithGoogle() async {
+  Future<GoogleSignInOutcome> signInWithGoogle() async {
     final googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return; // user cancelled the picker
+    if (googleUser == null) {
+      // User cancelled the account picker: not an error.
+      return GoogleSignInOutcome.signedIn;
+    }
+
+    // Returning user? Check the users collection by email BEFORE any
+    // account creation. Returning users must never hit a consent gate.
+    final existing = await fetchUserByEmail(googleUser.email);
+
+    if (existing != null) {
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final cred = await _auth.signInWithCredential(credential);
+      final uid = cred.user?.uid;
+      if (uid == null) return GoogleSignInOutcome.signedIn;
+      _previousUserId = uid;
+      _cachedUser = await getCurrentUserModel();
+      _isInitialized = true;
+      notifyListeners();
+      return GoogleSignInOutcome.signedIn;
+    }
+
+    // New Google account: keep the picker result pending. No Firebase
+    // account is created and no profile record is written until the
+    // caller confirms consent via completeGoogleConsent().
+    _pendingGoogleUser = googleUser;
+    return GoogleSignInOutcome.consentRequired;
+  }
+
+  GoogleSignInAccount? _pendingGoogleUser;
+
+  @override
+  Future<void> completeGoogleConsent() async {
+    final googleUser = _pendingGoogleUser;
+    if (googleUser == null) {
+      throw StateError('No pending Google sign-in to confirm.');
+    }
 
     final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
@@ -150,10 +202,9 @@ class FirebaseAuthService extends AuthService {
 
     final cred = await _auth.signInWithCredential(credential);
     final uid = cred.user?.uid;
-    if (uid == null) return;
+    if (uid == null) throw StateError('Google sign-in did not return a user.');
 
-    final existingDoc =
-        await _firestore.collection('users').doc(uid).get();
+    final existingDoc = await _firestore.collection('users').doc(uid).get();
     if (!existingDoc.exists) {
       final userModel = UserModel(
         id: uid,
@@ -172,14 +223,23 @@ class FirebaseAuthService extends AuthService {
         isBanned: false,
         isSuspended: false,
       );
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .set(userModel.toMap());
+      await _firestore.collection('users').doc(uid).set(userModel.toMap());
+      // Record that this new account accepted the Terms and Privacy Notice.
+      await _firestore.collection('users').doc(uid).set(
+        {
+          'consent': {
+            'acceptedAt': FieldValue.serverTimestamp(),
+            'terms': true,
+            'privacy': true,
+          },
+        },
+        SetOptions(merge: true),
+      );
       _cachedUser = userModel;
     } else {
       _cachedUser = await getCurrentUserModel();
     }
+    _pendingGoogleUser = null;
     _previousUserId = uid;
     _isInitialized = true;
     notifyListeners();
@@ -191,6 +251,7 @@ class FirebaseAuthService extends AuthService {
     required String password,
     required UserRole role,
     String? name,
+    bool acceptedConsent = false,
   }) async {
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -216,10 +277,21 @@ class FirebaseAuthService extends AuthService {
         isSuspended: false,
       );
 
+      final userMap = userModel.toMap();
+      // Explicit consent record persisted with the profile so a new
+      // email/password account carries its acceptance timestamp.
+      if (acceptedConsent) {
+        userMap['consent'] = {
+          'acceptedAt': FieldValue.serverTimestamp(),
+          'terms': true,
+          'privacy': true,
+        };
+      }
+
       await _firestore
           .collection('users')
           .doc(cred.user!.uid)
-          .set(userModel.toMap());
+          .set(userMap);
 
       if (!cred.user!.emailVerified) {
         await cred.user!.sendEmailVerification();

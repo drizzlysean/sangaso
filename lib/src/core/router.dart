@@ -51,7 +51,14 @@ if (user == null) {
       return '/verify-email';
     }
 
-    if (!user.displayName.isNotEmpty || !user.city.isNotEmpty) {
+    // Onboarding guard: verified users with incomplete profiles are routed
+    // to profile setup once. Completed profiles pass straight through, so
+    // returning users are never forced to redo onboarding. Guarding the
+    // setup path itself prevents a redirect loop.
+    final isProfileSetup = path == '/profile-setup';
+    final displayName = user.displayName ?? '';
+    final city = user.city ?? '';
+    if ((displayName.isEmpty || city.isEmpty) && !isProfileSetup) {
       return '/profile-setup';
     }
 

@@ -18,7 +18,19 @@ class ProfileSetupScreen extends StatefulWidget {
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
-  final _formKey = GlobalKey<FormState>();
+  static const int _totalSteps = 3;
+
+  // Field keys: used to validate only the fields on the current step.
+  final _nameKey = GlobalKey<FormFieldState<String>>();
+  final _phoneKey = GlobalKey<FormFieldState<String>>();
+  final _cityKey = GlobalKey<FormFieldState<String>>();
+  final _addressKey = GlobalKey<FormFieldState<String>>();
+  final _tradingKey = GlobalKey<FormFieldState<String>>();
+  final _categoryKey = GlobalKey<FormFieldState<String>>();
+  final _priceKey = GlobalKey<FormFieldState<String>>();
+  final _bioKey = GlobalKey<FormFieldState<String>>();
+  final _heardOtherKey = GlobalKey<FormFieldState<String>>();
+
   final _displayNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
@@ -30,21 +42,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _bioController = TextEditingController();
   final _priceController = TextEditingController();
 
+  // Seeker onboarding
+  static const _heardOptions = [
+    'Friend or family',
+    'Social media',
+    'Google search',
+    'Play Store',
+    'Community board',
+    'Other',
+  ];
+  String? _heardAbout;
+  final _heardOtherController = TextEditingController();
+  String? _heardError;
+
+  int _step = 0;
   bool _isLoading = false;
   UserModel? _currentUser;
-
-  // Use the same colors as BookingDetailsScreen
-  // Colors from AppColors
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 
   @override
   void initState() {
@@ -74,6 +87,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             _categoryController.text = user.category ?? '';
             _bioController.text = user.bio ?? '';
             _priceController.text = user.basePrice?.toStringAsFixed(2) ?? '';
+          } else {
+            _heardAbout = user.heardAbout;
           }
         }
       }
@@ -93,11 +108,62 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _categoryController.dispose();
     _bioController.dispose();
     _priceController.dispose();
+    _heardOtherController.dispose();
     super.dispose();
   }
 
+  bool get _isProvider => _currentUser?.role == UserRole.provider;
+
+  List<GlobalKey<FormFieldState<String>>> _stepFieldKeys() {
+    switch (_step) {
+      case 0:
+        return [_nameKey, _phoneKey];
+      case 1:
+        return [_cityKey, _addressKey];
+      case 2:
+        if (_isProvider) {
+          return [_tradingKey, _categoryKey, _priceKey, _bioKey];
+        }
+        return _heardAbout == 'Other' ? [_heardOtherKey] : const [];
+      default:
+        return const [];
+    }
+  }
+
+  bool _validateStep() {
+    var ok = true;
+    for (final key in _stepFieldKeys()) {
+      if (!key.currentState!.validate()) ok = false;
+    }
+    if (_step == 2 && !_isProvider && _heardAbout == null) {
+      setState(() => _heardError = 'Please choose how you heard about Sangaso');
+      ok = false;
+    }
+    return ok;
+  }
+
+  void _continue() {
+    if (!_validateStep()) return;
+    if (_step < _totalSteps - 1) {
+      setState(() {
+        _step++;
+      });
+      return;
+    }
+    _saveProfile();
+  }
+
+  void _back() {
+    if (_step == 0) {
+      if (widget.isEditing) context.pop();
+      return;
+    }
+    setState(() => _step--);
+  }
+
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate() || _currentUser == null) return;
+    if (_currentUser == null) return;
+    if (!_validateStep()) return;
 
     setState(() => _isLoading = true);
 
@@ -136,6 +202,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ? null
             : double.tryParse(_priceController.text.trim()))
             : null,
+        heardAbout: _currentUser!.role == UserRole.provider
+            ? null
+            : (_heardAbout == 'Other'
+                ? (_heardOtherController.text.trim().isEmpty
+                    ? 'Other'
+                    : 'Other: ${_heardOtherController.text.trim()}')
+                : _heardAbout),
         updatedAt: DateTime.now(),
       );
 
@@ -187,8 +260,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       );
     }
 
-    final isProvider = _currentUser!.role == UserRole.provider;
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -211,254 +282,367 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         )
             : null,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        isProvider ? Icons.business : Icons.person,
-                        color: AppColors.accent,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.isEditing
-                                ? 'Edit Your Profile'
-                                : 'Complete Your Profile',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Fill in your details below',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildProgressHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildStepContent(),
               ),
+            ),
+            _buildNavBar(),
+          ],
+        ),
+      ),
+    );
+  }
 
-              // Display Name
-              _buildInputField(
-                label: 'Display Name',
-                icon: Icons.person,
-                controller: _displayNameController,
-                hintText: 'Enter your display name',
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Display name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
+  String get _stepTitle {
+    switch (_step) {
+      case 0:
+        return 'About you';
+      case 1:
+        return 'Your area';
+      case 2:
+        return _isProvider ? 'Your business' : 'About Sangaso';
+      default:
+        return '';
+    }
+  }
 
-              // Phone
-              _buildInputField(
-                label: 'Phone Number',
-                icon: Icons.phone,
-                controller: _phoneController,
-                hintText: 'Enter your phone number',
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Phone number is required';
-                  }
-                  if (!RegExp(r'^[0-9+\-\s]{10,}$').hasMatch(value)) {
-                    return 'Enter a valid phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // City
-              _buildInputField(
-                label: 'City / Area',
-                icon: Icons.location_city,
-                controller: _cityController,
-                hintText: 'Enter your city or area',
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'City is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Address
-              _buildInputField(
-                label: 'Default Address',
-                icon: Icons.home,
-                controller: _addressController,
-                hintText: 'Enter your complete address',
-                maxLines: 2,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Address is required';
-                  }
-                  return null;
-                },
-              ),
-
-              // Provider-specific fields
-              if (isProvider) ...[
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+  Widget _buildProgressHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          if (!widget.isEditing) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              onPressed: _step == 0 ? null : _back,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Step ${_step + 1} of $_totalSteps  -  $_stepTitle',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.work_outline, color: AppColors.accent, size: 24),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Service Provider Details',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Fill in your business details to attract more customers',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: List.generate(_totalSteps, (i) {
+                    final active = i <= _step;
+                    return Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(right: i < _totalSteps - 1 ? 6 : 0),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: active ? AppColors.accent : AppColors.border,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Trading Name
-                _buildInputField(
-                  label: 'Trading Name',
-                  icon: Icons.business,
-                  controller: _tradingNameController,
-                  hintText: 'e.g., John\'s Plumbing Services',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Trading name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Category
-                _buildInputField(
-                  label: 'Service Category',
-                  icon: Icons.category,
-                  controller: _categoryController,
-                  hintText: 'e.g., Plumbing, Electrical, Cleaning',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Category is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Base Price
-                _buildInputField(
-                  label: 'Base Price (K)',
-                  icon: Icons.attach_money,
-                  controller: _priceController,
-                  hintText: 'e.g., 50.00',
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Base price is required';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Bio
-                _buildInputField(
-                  label: 'Bio / Description',
-                  icon: Icons.description,
-                  controller: _bioController,
-                  hintText: 'Describe your services and experience',
-                  maxLines: 4,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Bio is required';
-                    }
-                    if (value.length < 20) {
-                      return 'Please provide a more detailed description (min. 20 characters)';
-                    }
-                    return null;
-                  },
+                    );
+                  }),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              const SizedBox(height: 32),
+  Widget _buildStepContent() {
+    switch (_step) {
+      case 0:
+        return _buildStep0();
+      case 1:
+        return _buildStep1();
+      case 2:
+        return _isProvider ? _buildProviderStep() : _buildHeardStep();
+    }
+    return const SizedBox.shrink();
+  }
 
-              // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveProfile,
+  Widget _buildStep0() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildInputField(
+          label: 'Display Name',
+          icon: Icons.person,
+          controller: _displayNameController,
+          hintText: 'Enter your display name',
+          fieldKey: _nameKey,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Display name is required';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          label: 'Phone Number',
+          icon: Icons.phone,
+          controller: _phoneController,
+          hintText: 'Enter your phone number',
+          keyboardType: TextInputType.phone,
+          fieldKey: _phoneKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Phone number is required';
+            }
+            if (!RegExp(r'^[0-9+\-\s]{10,}$').hasMatch(value)) {
+              return 'Enter a valid phone number';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep1() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildInputField(
+          label: 'City / Area',
+          icon: Icons.location_city,
+          controller: _cityController,
+          hintText: 'Enter your city or area',
+          fieldKey: _cityKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'City is required';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          label: 'Default Address',
+          icon: Icons.home,
+          controller: _addressController,
+          hintText: 'Enter your complete address',
+          maxLines: 2,
+          fieldKey: _addressKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Address is required';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProviderStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: AppColors.accentLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.work_outline, color: AppColors.accent, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Fill in your business details to attract more customers',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _buildInputField(
+          label: 'Trading Name',
+          icon: Icons.business,
+          controller: _tradingNameController,
+          hintText: 'e.g., John\'s Plumbing Services',
+          fieldKey: _tradingKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Trading name is required';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          label: 'Service Category',
+          icon: Icons.category,
+          controller: _categoryController,
+          hintText: 'e.g., Plumbing, Electrical, Cleaning',
+          fieldKey: _categoryKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Category is required';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          label: 'Base Price (K)',
+          icon: Icons.attach_money,
+          controller: _priceController,
+          hintText: 'e.g., 50.00',
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          fieldKey: _priceKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Base price is required';
+            }
+            if (double.tryParse(value) == null) {
+              return 'Enter a valid number';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          label: 'Bio / Description',
+          icon: Icons.description,
+          controller: _bioController,
+          hintText: 'Describe your services and experience',
+          maxLines: 4,
+          fieldKey: _bioKey,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Bio is required';
+            }
+            if (value.length < 20) {
+              return 'Please provide a more detailed description (min. 20 characters)';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeardStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'How did you hear about Sangaso?',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Your answer helps us spread the word.',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._heardOptions.map((option) => RadioListTile<String>(
+              value: option,
+              groupValue: _heardAbout,
+              onChanged: (v) {
+                setState(() {
+                  _heardAbout = v;
+                  _heardError = null;
+                });
+              },
+              title: Text(option,
+                  style: const TextStyle(
+                      fontSize: 14, color: AppColors.textPrimary)),
+              activeColor: AppColors.accent,
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        if (_heardError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              _heardError!,
+              style: TextStyle(color: AppColors.error, fontSize: 12),
+            ),
+          ),
+        if (_heardAbout == 'Other') ...[
+          const SizedBox(height: 8),
+          _buildInputField(
+            label: 'Tell us more (optional)',
+            icon: Icons.edit,
+            controller: _heardOtherController,
+            hintText: 'e.g., saw a flyer',
+            fieldKey: _heardOtherKey,
+            validator: null,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNavBar() {
+    final isLast = _step == _totalSteps - 1;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (_step > 0 || widget.isEditing) ...[
+              OutlinedButton(
+                onPressed: _isLoading ? null : _back,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 14),
+                  side: BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(_step == 0 ? 'Cancel' : 'Back',
+                    style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _continue,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.isEditing ? AppColors.primary : AppColors.accent,
+                  backgroundColor:
+                      widget.isEditing ? AppColors.primary : AppColors.accent,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -477,12 +661,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      widget.isEditing ? Icons.save : Icons.check_circle,
+                      isLast
+                          ? (widget.isEditing ? Icons.save : Icons.check_circle)
+                          : Icons.arrow_forward,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      widget.isEditing ? 'Save Changes' : 'Save & Continue',
+                      isLast
+                          ? (widget.isEditing ? 'Save Changes' : 'Save & Continue')
+                          : 'Continue',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -491,23 +679,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ],
                 ),
               ),
-
-              // Skip button for initial setup (not for editing)
-              if (!widget.isEditing) ...[
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.go('/home'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                  ),
-                  child: const Text(
-                    'Skip for now',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -519,6 +692,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     required TextEditingController controller,
     required String hintText,
     required String? Function(String?)? validator,
+    GlobalKey<FormFieldState<String>>? fieldKey,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
   }) {
@@ -535,6 +709,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: fieldKey,
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,

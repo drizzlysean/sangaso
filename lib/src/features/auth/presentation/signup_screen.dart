@@ -2,15 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/legal_links.dart';
 import '../../../core/widgets/brand.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/auth_errors.dart';
-
-const kTermsUrl = 'https://www.sangaso.com/?page=terms';
-const kPrivacyUrl = 'https://www.sangaso.com/?page=privacy';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -48,7 +46,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_consent) { _consentError(); return; }
     setState(() => _loading = true);
     try {
-      await context.read<AuthService>().signInWithGoogle();
+      final outcome = await context.read<AuthService>().signInWithGoogle();
+      if (outcome == GoogleSignInOutcome.consentRequired) {
+        // Signup screen has already captured explicit consent, so the
+        // pending Google account can be completed immediately.
+        await context.read<AuthService>().completeGoogleConsent();
+      }
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -68,6 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         password: _passCtrl.text.trim(),
         role: _role,
         name: _nameCtrl.text.trim(),
+        acceptedConsent: _consent,
       );
       if (mounted) context.go('/home');
     } catch (e) {
@@ -133,13 +137,70 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _RoleTile(label: 'Offer services', sub: 'Earn as a pro', icon: Icons.handyman_rounded,
                 selected: _role == UserRole.provider, onTap: () => setState(() => _role = UserRole.provider)),
             ]),
-            const SizedBox(height: 32),
+
+            // Legal consent: explicitly accepted, initially unchecked.
+            // Both Create Account and Google signup are gated on it.
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => setState(() => _consent = !_consent),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _consent,
+                    onChanged: (v) => setState(() => _consent = v ?? false),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      style: const TextStyle(fontSize: 12.5, color: AppColors.text2, height: 1.5),
+                      children: [
+                        const TextSpan(text: 'I agree to the '),
+                        TextSpan(
+                          text: 'Terms of Service',
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => launchUrl(Uri.parse(kTermsUrl), mode: LaunchMode.externalApplication),
+                        ),
+                        const TextSpan(text: ' and the '),
+                        TextSpan(
+                          text: 'Privacy Notice',
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 16),
 
             PrimaryButton(
               label: 'Create Account',
               trailingIcon: Icons.arrow_forward_rounded,
               loading: _loading,
               onPressed: _loading ? null : _consent ? _submit : _consentError,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: _loading ? null : _googleSubmit,
+                icon: const Text('G', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF4285F4))),
+                label: const Text('Continue with Google', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text1)),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
             ),
             const SizedBox(height: 24),
 

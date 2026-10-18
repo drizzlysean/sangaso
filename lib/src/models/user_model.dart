@@ -18,6 +18,9 @@ class UserModel {
   final String? category;
   final String? bio;
   final double? basePrice;
+  // Onboarding: how the user heard about Sangaso (backward-compatible
+  // nullable extension; absent in older documents).
+  final String? heardAbout;
   // Admin moderation fields
   final bool isBanned;
   final bool isSuspended;
@@ -39,6 +42,7 @@ class UserModel {
     this.category,
     this.bio,
     this.basePrice,
+    this.heardAbout,
     this.isBanned = false,
     this.isSuspended = false,
     this.createdAt,
@@ -60,6 +64,7 @@ class UserModel {
       'category': category,
       'bio': bio,
       'basePrice': basePrice,
+      'heardAbout': heardAbout,
       'isBanned': isBanned,
       'isSuspended': isSuspended,
       'createdAt': createdAt?.toIso8601String(),
@@ -85,6 +90,7 @@ class UserModel {
       category: map['category'],
       bio: map['bio'],
       basePrice: (map['basePrice'] as num?)?.toDouble(),
+      heardAbout: map['heardAbout'],
       isBanned: map['isBanned'] ?? false,
       isSuspended: map['isSuspended'] ?? false,
       createdAt: parseFirestoreDateOrNull(map['createdAt'], field: 'createdAt'),
@@ -107,6 +113,7 @@ class UserModel {
     String? category,
     String? bio,
     double? basePrice,
+    String? heardAbout,
     bool? isBanned,
     bool? isSuspended,
     DateTime? createdAt,
@@ -126,6 +133,7 @@ class UserModel {
       category: category ?? this.category,
       bio: bio ?? this.bio,
       basePrice: basePrice ?? this.basePrice,
+      heardAbout: heardAbout ?? this.heardAbout,
       isBanned: isBanned ?? this.isBanned,
       isSuspended: isSuspended ?? this.isSuspended,
       createdAt: createdAt ?? this.createdAt,

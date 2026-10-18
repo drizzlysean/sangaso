@@ -45,6 +45,8 @@ class FcmService {
   Future<void> saveToken(String uid) async {
     final token = await getToken();
     if (token == null || token.isEmpty) return;
+    _activeUid = uid;
+    _lastUid = uid;
     _tokenCache = token;
     await _firestore.collection('users').doc(uid).set(
       {
@@ -68,15 +70,22 @@ class FcmService {
       // Token cleanup is best-effort; sign-out must still succeed.
     }
     _tokenCache = null;
+    _activeUid = null;
   }
 
   String? _tokenCache;
+  String? _activeUid;
+  String? _lastUid;
+  String? get lastUid => _lastUid;
+  bool _refreshBusy = false;
 
   /// Wires foreground display, background handling and tap routing.
   /// [onForeground] is invoked for messages received while the app is
-  /// visible; the host screen decides how to surface them.
+  /// visible; the host screen decides how to surface them. [onMessageTapped]
+  /// fires when a backgrounded message is opened from the tray.
   void init({
     required void Function(RemoteMessage message) onForeground,
+    required void Function(RemoteMessage message) onMessageTapped,
   }) {
     if (_initialized) return;
     _initialized = true;
@@ -84,22 +93,39 @@ class FcmService {
     // Foreground: stream messages to the host for in-app display.
     FirebaseMessaging.onMessage.listen(onForeground);
 
-    // Background/tap: cold-start messages are handled by getInitialMessage.
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _lastTapped = message;
+    // Background/tap: the app was running in the background and the user
+    // opened the message from the tray.
+    FirebaseMessaging.onMessageOpenedApp.listen(onMessageTapped);
+
+    // Rotation: platform tokens can be recycled while the app is idle.
+    // Re-persist the fresh token for the signed-in user (best-effort,
+    // serialized to avoid overlapping writes during rapid rotation).
+    _messaging.onTokenRefresh.listen((token) {
+      if (token.isEmpty) return;
+      _tokenCache = token;
+      final uid = _activeUid;
+      if (uid == null || _refreshBusy) return;
+      _refreshBusy = true;
+      _firestore
+          .collection('users')
+          .doc(uid)
+          .set(
+            {
+              'fcmTokens': {token: FieldValue.serverTimestamp()},
+            },
+            SetOptions(merge: true),
+          )
+          .whenComplete(() => _refreshBusy = false);
     });
   }
 
-  RemoteMessage? _lastTapped;
-  RemoteMessage? consumeLastTapped() {
-    final tapped = _lastTapped;
-    _lastTapped = null;
-    return tapped;
-  }
-
-  /// Returns the message that cold-started the app, if any.
-  Future<RemoteMessage?> getInitialMessage() async {
-    return await _messaging.getInitialMessage();
+  /// Cold-start tap: the app was launched from a notification tap, so no
+  /// onMessageOpenedApp event fires. Call once after the router is ready.
+  Future<void> routeInitialMessage(
+    void Function(RemoteMessage message) handler,
+  ) async {
+    final message = await _messaging.getInitialMessage();
+    if (message != null) handler(message);
   }
 
   Future<void> forgetToken() async {

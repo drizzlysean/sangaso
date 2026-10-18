@@ -53,6 +53,7 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
     required String password,
     required UserRole role,
     String? name,
+    bool acceptedConsent = false,
   }) async {
     final error = _signUpError?.call();
     if (error != null) throw error;
@@ -63,22 +64,49 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
       isVerified: false,
       displayName: name,
     );
+    lastAcceptedConsent = acceptedConsent;
     notifyListeners();
   }
 
+  bool lastAcceptedConsent = false;
+
   bool _googleSignInCalled = false;
   Object? Function()? _googleSignInError;
+  GoogleSignInOutcome? _googleOutcome = GoogleSignInOutcome.signedIn;
   bool get googleSignInCalled => _googleSignInCalled;
   String? lastGoogleUserDisplayName;
 
+  /// Test hook: what the next signInWithGoogle() call reports.
+  set googleOutcome(GoogleSignInOutcome outcome) => _googleOutcome = outcome;
+
   @override
-  Future<void> signInWithGoogle() async {
+  Future<GoogleSignInOutcome> signInWithGoogle() async {
     _googleSignInCalled = true;
     final error = _googleSignInError?.call();
     if (error != null) throw error;
+    if (_googleOutcome == GoogleSignInOutcome.consentRequired) {
+      return GoogleSignInOutcome.consentRequired;
+    }
     currentUserModel = UserModel(
       id: 'google-user',
       email: 'google@test.sangaso.com',
+      role: UserRole.seeker,
+      isVerified: true,
+      displayName: lastGoogleUserDisplayName ?? 'Google User',
+    );
+    notifyListeners();
+    return GoogleSignInOutcome.signedIn;
+  }
+
+  bool _googleConsentCompleted = false;
+  bool get googleConsentCompleted => _googleConsentCompleted;
+
+  @override
+  Future<void> completeGoogleConsent() async {
+    _googleConsentCompleted = true;
+    currentUserModel = UserModel(
+      id: 'google-new-user',
+      email: 'google-new@test.sangaso.com',
       role: UserRole.seeker,
       isVerified: true,
       displayName: lastGoogleUserDisplayName ?? 'Google User',
@@ -95,8 +123,15 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
   @override
   Future<void> resetPassword(String email) async {}
 
+  bool updateUserCalled = false;
+  bool throwOnUpdateUser = false;
+
   @override
   Future<void> updateUser(UserModel user) async {
+    updateUserCalled = true;
+    if (throwOnUpdateUser) {
+      throw Exception('updateUser failed (injected)');
+    }
     currentUserModel = user;
     notifyListeners();
   }
