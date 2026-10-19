@@ -134,3 +134,37 @@ hijacking touches (plus WhatsApp/LarkPlayer focus shifts). Nothing was
 sent from WhatsApp; media was paused. Unverified-on-device list:
 photo upload flow, booking Confirm navigation, Google sign-in consent
 dialog, notification tap routing, logout + account deletion.
+
+## Session 6 addendum -- Google sign-in wiring + 1.0.3+7 (2026-10-19)
+
+| Item | Value |
+| --- | --- |
+| Source commit | run `39274465515`, head `22a8713` |
+| Version | **1.0.3+7** (versionCode 7) |
+| SHA-256 | `2a4fa610aa9dd1ff0422b6583fae819b480f21c0cb11be400b84030cdfb6b2f5` |
+| Size | 47,045,542 bytes |
+| Package / SDK | com.sangaso.app, minSdk 24 / targetSdk 36 |
+| Signing | upload key unchanged - SHA1 1D:2F:AB:F4:74:09:37:21:D7:80:39:A9:71:FE:08:F5:68:37:F7:68 / SHA256 D8:AA:55:3B:0E:AB:74:58:37:F0:E2:87:42:AA:19:70:31:9C:3B:3C:49:85:E0:8D:56:9C:D4:74:76:1C:B6:1A |
+| Google sign-in | `default_web_client_id` verified present in `base/resources.pb` together with the client id value |
+| Branding | logo_icon.png (55,631 B) byte-verified |
+| Tests / analyze | 102/102 pass, 0 errors / 0 warnings |
+
+Change: `android/app/src/main/res/values/strings.xml` now declares
+`default_web_client_id` = the Android OAuth client id registered in
+Firebase for package com.sangaso.app. The google_sign_in plugin resolves
+that resource at runtime (GoogleSignInPlugin.java), so Google sign-in no
+longer starts without a client id. No `google-services.json` and no
+Google Services Gradle plugin were introduced: the app keeps using
+`lib/firebase_options.dart` (App ID 1:445535100693:android:443a648147302e0ceb531c,
+unchanged), and the OAuth client id is a public value.
+
+Preserved artifacts:
+- `artifacts/app-release.aab` - 1.0.3+7 (current candidate)
+- `artifacts/app-release-1.0.3+6.aab` - SHA 51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7 (previous candidate, preserved)
+
+Outstanding for Google sign-in from Play (owner): the Play App Signing
+certificate SHA-1 does not exist until the first upload. After uploading
++7 to Internal testing, copy it from Play Console (App integrity -> App
+signing key certificate), add it as another fingerprint on the
+com.sangaso.app Firebase app entry (and to the OAuth client), then ship
+the next build. Debug/sideloaded builds can use Google sign-in sooner.

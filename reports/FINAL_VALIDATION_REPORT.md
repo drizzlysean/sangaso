@@ -193,3 +193,31 @@ Branch recovery/unified-design-2026-10-17; HEAD e4a9037 (code 9d217bb).
       listing advertises Google sign-in.
    e. FCM delivery backend (post-internal-testing; app consumes, no
       sender exists yet).
+
+## Session 6 addendum -- Google sign-in client wired, 1.0.3+7 built (2026-10-19)
+
+- Root cause of the earlier Google sign-in gap: the app shipped no
+  `default_web_client_id`, so the google_sign_in plugin had no OAuth
+  client to use on Android (the project had only a web client and the
+  Android app entry carried the legacy package name). Firebase core was
+  never the problem - the App ID in lib/firebase_options.dart is valid.
+- Fix (commit 22a8713): added
+  `android/app/src/main/res/values/strings.xml` with the Android OAuth
+  client id registered in Firebase for com.sangaso.app; bumped the build
+  to 1.0.3+7. Deliberately no google-services.json and no Google
+  Services Gradle plugin, so the Dart-side Firebase config and the
+  existing App ID are untouched. The client id is a public value.
+- Verification: 102/102 tests pass, flutter analyze clean; CI run
+  39274465515 -> app-release.aab 47,045,542 B, SHA-256
+  2a4fa610aa9dd1ff0422b6583fae819b480f21c0cb11be400b84030cdfb6b2f5,
+  versionCode 7, upload-key signed (unchanged fingerprints), and
+  `default_web_client_id` + its value confirmed inside the packaged
+  `base/resources.pb`.
+- Previous candidate preserved as artifacts/app-release-1.0.3+6.aab
+  (SHA 51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7).
+- Still true and unverified: Google sign-in from a Play-installed build
+  needs the Play App Signing SHA-1, which only exists after the first
+  upload; the website legal pages are still not live; device QA on the
+  price-fix build is still outstanding; the branded auth-email
+  integration remains disabled until the website backend is deployed,
+  configured and a real branded email is received.
