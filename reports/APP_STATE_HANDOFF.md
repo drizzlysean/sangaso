@@ -236,3 +236,95 @@ shipped app continues to use Firebase's default sender.
    rebuilt by this integration.
 4. Firebase Console: authorized domains and the email action URL must stay
    on the deployed `https://sangaso.com/auth-action.php` (unchanged).
+
+---
+
+## 11. Final closed-test distribution check (2026-10-19)
+
+### Verified from the repository and artifacts
+- Branch `recovery/unified-design-2026-10-17`, HEAD `f36946d`, working tree clean.
+- Artifacts preserved: `artifacts/app-release.aab` = 1.0.3+7 (SHA-256
+  `2a4fa610aa9dd1ff0422b6583fae819b480f21c0cb11be400b84030cdfb6b2f5`,
+  47,045,542 B); `artifacts/app-release-1.0.3+6.aab` = 1.0.3+6 (SHA-256
+  `51d3b662afa5131ad1709ffd308b20bd92ca775aa5fa0e45e0f6f6cf4b08d2a7`).
+- +7 build lineage: CI run `39274465515`, head `22a8713`, success,
+  2026-10-19T15:02:53Z; versionCode 7 / versionName 1.0.3 / package
+  `com.sangaso.app` / minSdk 24 / targetSdk 36; upload key unchanged
+  (SHA1 1D:2F:AB:F4:74:09:37:21:D7:80:39:A9:71:FE:08:F5:68:37:F7:68,
+  SHA256 D8:AA:55:3B:0E:AB:74:58:37:F0:E2:87:42:AA:19:70:31:9C:3B:3C:49:85:E0:8D:56:9C:D4:74:76:1C:B6:1A);
+  branding asset present; `default_web_client_id` and its value confirmed
+  inside the packaged `base/resources.pb`.
+- Firebase config shipped: project `ondemand-a16d1`, sender `445535100693`,
+  Android appId `1:445535100693:android:443a648147302e0ceb531c`, apiKey
+  present (masked). Android registration in code: namespace and
+  applicationId both `com.sangaso.app`.
+- OAuth: `default_web_client_id` =
+  `445535100693-r4q7ns9ra7gaf43gc9i79ha1clldmtvc.apps.googleusercontent.com`;
+  its project-number prefix `445535100693` matches the Firebase project
+  number, so it belongs to the same GCP project. Note: this is the
+  **Android** OAuth client (client_type 3) — the name is historical. The
+  website's web client is a different id
+  (`445535100693-nv9j7f6cfsn475r4hobanparifsc73it`).
+- Auth-email integration: `auth_email_service.dart` exists at the +7 build
+  commit and is imported by `main.dart`; commit `139223e` IS an ancestor of
+  `22a8713` (the +7 build commit). The switch `SANGASO_AUTH_MAIL_CUSTOM`
+  defaults to false and the CI workflow passes no such dart-define, so the
+  custom sender is OFF in +7. Artifact scan confirms it: auth-email string
+  literals are absent from `libapp.so` while strings from other commits
+  (e.g. "Starting price") are present — the dead custom-mode branch is
+  compiled out. Version 7 therefore uses Firebase's default sender and can
+  be tested independently of the branded-email integration.
+
+### Correction to the stated premise
+"1.0.3+7 was created before the auth-email integration" is not accurate.
+The integration commit `139223e` predates the +7 build commit `22a8713`, so
+the +7 source tree includes the integration; only its code path is compiled
+out because the switch is off.
+
+### Cannot be verified without the owner's Play Console / Firebase screens
+- Whether a Firebase Android registration with package `com.sangaso.app`
+  exists (the repo carries no google-services.json and the app never reads
+  the package from Firebase config).
+- Which SHA-1/SHA-256 fingerprints are registered on that registration.
+- The Play App Signing SHA-1 value and whether it is registered on the
+  OAuth client the app uses.
+- Play Console closed-test state (release in review, track, tester list,
+  opt-in URL) and the website legal-page live status.
+
+### Owner checklist for distributing 1.0.3+7 through Closed testing
+1. Play Console -> your app -> Testing -> Closed testing -> Manage track:
+   confirm the release "Sangaso Closed Test 1.0.3" carries versionCode 7.
+2. Tester list: add a Google Group under the track; copy the opt-in URL
+   (Testing -> Closed testing -> Testers tab -> "How testers join") and
+   send it to testers.
+3. App content -> Privacy policy: the URL must serve a real policy. As of
+   this check `https://www.sangaso.com/?page=privacy` still returns the
+   marketing landing page (170,622 bytes, no policy text) - deploy the
+   website multi-page patch or change the URL before publishing.
+4. App content -> Data safety, Content rating, Target audience, Ads,
+   App access, Government/Health/Financial: all green (answers pre-written
+   in reports/PLAY_LISTING_PACK.md).
+5. Store listing: name, short + full description, icon 512x512, feature
+   graphic 1024x500, at least 2 phone screenshots, support email, privacy
+   URL, data-deletion URL.
+6. Wait for the pre-review checks, then review, then live; confirm
+   App bundle explorer shows versionCode 7.
+7. After it is live: Play Console -> App integrity -> App signing key
+   certificate -> copy the SHA-1 and confirm it is registered on the
+   `com.sangaso.app` Firebase registration (and on the OAuth client). Only
+   then does Google sign-in work in Play-installed builds.
+8. Tester onboarding: open the opt-in URL signed into the right Google
+   account -> Become a tester -> accept Play terms -> install from Play.
+9. Tester expectations for this build: email/password sign-in works;
+   Google sign-in may fail until the Play SHA-1 is registered; no push
+   notifications; emails come from Firebase's default sender.
+10. Keep the closed test running with 20 testers opted in continuously for
+    14 days (12 for older developer accounts) before applying to
+    production, and do not skip the open-testing track.
+
+### Rebuild recommendation
+No rebuild is required to distribute 1.0.3+7. Registering the Play App
+Signing SHA-1 is server-side only. A new version is justified only for a
+concrete requirement: enabling the branded auth-email transport (after the
+website backend is deployed, configured and a real branded email is
+received) or a specific code fix.
