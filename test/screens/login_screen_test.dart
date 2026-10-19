@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:sangaso/src/features/auth/presentation/login_screen.dart';
 import 'package:sangaso/src/models/user_model.dart';
+import 'package:sangaso/src/services/auth_email_service.dart';
 import 'package:sangaso/src/services/auth_service.dart';
 
 import '../fakes/fake_auth_service.dart';
@@ -142,5 +143,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('FirebaseAuthException'), findsNothing);
     expect(find.byType(SnackBar), findsOneWidget);
+  });
+  testWidgets('branded reset failure message does not disclose account state',
+      (tester) async {
+    final auth = FakeAuthService()
+      ..resetError = const AuthEmailException(
+        AuthEmailResult(AuthEmailOutcome.unavailable),
+      );
+    await tester.pumpWidget(loginHarness(auth: auth));
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Email'), 'user@example.com');
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    final snackText = find.descendant(
+      of: find.byType(SnackBar),
+      matching: find.byType(Text),
+    );
+    final text = (tester.widget<Text>(snackText.first).data ?? '').toLowerCase();
+    expect(text, isNot(contains('no account')));
+    expect(text, isNot(contains('not find')));
+    expect(text, isNot(contains('does not exist')));
+    expect(text, isNot(contains('registered')));
   });
 }

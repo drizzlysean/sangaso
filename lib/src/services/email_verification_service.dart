@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'auth_email_service.dart';
+
 /// Seam for email-verification behaviour so screens (and widget tests) never
 /// need to touch FirebaseAuth.instance directly. Tests inject a fake; the
 /// production implementation is wired in main.dart.
@@ -16,9 +18,18 @@ abstract class EmailVerificationService {
 }
 
 class FirebaseAuthEmailVerificationService implements EmailVerificationService {
-  FirebaseAuthEmailVerificationService({FirebaseAuth? auth}) : _authOverride = auth;
+  FirebaseAuthEmailVerificationService({
+    FirebaseAuth? auth,
+    AuthEmailService? authEmailService,
+  })  : _authOverride = auth,
+        _authEmailService = authEmailService;
 
   final FirebaseAuth? _authOverride;
+
+  /// Optional branded-email client. When the build enables the custom
+  /// transport, verification emails go through the website's branded API;
+  /// otherwise Firebase's default sender stays in charge.
+  final AuthEmailService? _authEmailService;
 
   FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
 
@@ -41,6 +52,21 @@ class FirebaseAuthEmailVerificationService implements EmailVerificationService {
 
   @override
   Future<void> sendVerificationEmail() async {
+    final custom = _authEmailService;
+    if (custom != null && custom.customEnabled) {
+      // Branded transport: exactly one request, and NO automatic fallback to
+      // Firebase afterwards (a silent fallback could send a second email).
+      final result = await custom.requestVerificationEmail();
+      switch (result.outcome) {
+        case AuthEmailOutcome.sent:
+        case AuthEmailOutcome.alreadyVerified:
+          return;
+        case AuthEmailOutcome.disabled:
+          break; // unreachable while customEnabled is true
+        default:
+          throw AuthEmailException(result);
+      }
+    }
     await _auth.currentUser?.sendEmailVerification();
   }
 }

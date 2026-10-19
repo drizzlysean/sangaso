@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 // USE RELATIVE IMPORT INSTEAD OF PACKAGE IMPORT:
 import '../models/user_model.dart'; // This should work since both are in src folder
+import 'auth_email_service.dart';
 
 /// Outcome of a Google sign-in attempt.
 enum GoogleSignInOutcome {
@@ -46,7 +47,13 @@ class FirebaseAuthService extends AuthService {
   bool _isInitialized = false;
   String? _previousUserId;
 
-  FirebaseAuthService() {
+  /// Optional branded-email client (website `api/auth-mail.php`). Present in
+  /// every build, but only ACTIVE when the build enables the custom
+  /// transport; otherwise Firebase's default sender stays in charge.
+  final AuthEmailService? _authEmailService;
+
+  FirebaseAuthService({AuthEmailService? authEmailService})
+      : _authEmailService = authEmailService {
     // Safety net: Force initialization after 5 seconds if stream doesn't emit
     Future.delayed(const Duration(seconds: 5), () {
       if (!_isInitialized) {
@@ -320,6 +327,20 @@ class FirebaseAuthService extends AuthService {
 
   @override
   Future<void> resetPassword(String email) async {
+    final custom = _authEmailService;
+    if (custom != null && custom.customEnabled) {
+      // Branded transport: one request only, no Firebase fallback, and the
+      // answer never reveals whether the address exists.
+      final result = await custom.requestPasswordReset(email);
+      if (result.outcome == AuthEmailOutcome.sent ||
+          result.outcome == AuthEmailOutcome.rateLimited) {
+        // Both are "accepted" answers from the backend (the rate-limit
+        // answer is deliberately uniform), so the UI shows the same neutral
+        // confirmation in either case.
+        return;
+      }
+      throw AuthEmailException(result);
+    }
     await _auth.sendPasswordResetEmail(email: email);
   }
 

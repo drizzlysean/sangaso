@@ -127,8 +127,13 @@ class FakeAuthService extends ChangeNotifier implements AuthService {
   @override
   List<String> resetCalls = [];
 
+  /// Optional error thrown by resetPassword (e.g. a branded-transport
+  /// failure). Takes precedence over the Firebase-style error code.
+  Object? resetError;
+
   @override
   Future<void> resetPassword(String email) async {
+    if (resetError != null) throw resetError!;
     final code = _resetError;
     if (code != null) throw FirebaseAuthException(code: code);
     resetCalls.add(email);

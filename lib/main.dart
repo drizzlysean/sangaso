@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'src/app.dart';
 import 'src/services/account_deletion_service.dart';
+import 'src/services/auth_email_service.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/booking_service.dart';
 import 'src/services/email_verification_service.dart';
@@ -56,13 +57,23 @@ void main() async {
     FirebaseStorage.instance.useStorageEmulator(_kEmulatorHost, _kStorageEmulatorPort);
   }
 
-  final authService = FirebaseAuthService();
+  // Branded authentication-email client. Present in every build, but the
+  // custom transport is only ACTIVE when the build sets
+  // SANGASO_AUTH_MAIL_CUSTOM=1 (and the website backend is deployed and
+  // configured). Until then Firebase's default sender remains in charge.
+  final authEmailService = AuthEmailService(
+    transport: HttpAuthEmailTransport(),
+  );
+
+  final authService = FirebaseAuthService(authEmailService: authEmailService);
   final notificationService = FirebaseNotificationService();
   final bookingService = FirebaseBookingService(notificationService: notificationService);
   final messagingService = FirebaseMessagingService(notificationService: notificationService);
   final reviewService = FirebaseReviewService();
   final serviceService = ServiceService();
-  final emailVerificationService = FirebaseAuthEmailVerificationService();
+  final emailVerificationService = FirebaseAuthEmailVerificationService(
+    authEmailService: authEmailService,
+  );
   final accountDeletionService = AccountDeletionService();
   final fcmService = FcmService();
 
@@ -78,6 +89,7 @@ void main() async {
         Provider<EmailVerificationService>.value(value: emailVerificationService),
         Provider<AccountDeletionService>.value(value: accountDeletionService),
         Provider<FcmService>.value(value: fcmService),
+        Provider<AuthEmailService>.value(value: authEmailService),
       ],
       child: SangasoApp(
         authService: authService,

@@ -93,7 +93,6 @@ The owner's Gmail password was pasted in chat earlier (2026-10-17) — REQUIRED 
 - qa.seeker.1017@qateam.test — created in PRODUCTION by QA, unverified and unusable (fake domain); owner authorized deletion: delete from Firebase Auth (console → Authentication → Users) AND the matching users/{uid} Firestore doc; there is no flag separating QA accounts from customers, so future QA signups should keep the qa-* naming convention
 
 ## 9. Ordered "what next" plan (updated after price-fix session)
-
 Track A — unblock the WEBSITE (owner, one session):
 1. Deploy the multi-page routing patch so ?page=terms|privacy|delete-account serve real content.
 2. Verify each URL loads in a browser (re-verified 2026-10-18: STILL NOT DEPLOYED — all three URLs return the SPA landing page, /terms.php is 404); then app-store legal links become true.
@@ -128,3 +127,112 @@ flutter analyze                   # 0 errors, 0 warnings expected
 gh workflow run "Build APK" -R drizzlysean/sangaso --ref recovery/unified-design-2026-10-17 -f build_number=<n>
 # then verify: hash, size, bundletool dump manifest, META-INF/UPLOAD.* entries
 ```
+
+---
+
+## 10. Branded authentication-email integration (prepared, DISABLED by default)
+
+### Endpoint contract actually inspected
+Source: website repository `drizzlysean/sangaso` (separate), branch
+`recovery/final-website-release-2026-10-17`, commit `66d098e`, files
+`public_html/api/auth-mail.php`, `api/auth-mail-lib.php`,
+`api/mail-templates.php` (read-only inspection; the website session owns
+that code).
+
+```
+POST https://www.sangaso.com/api/auth-mail.php
+Content-Type: application/json
+
+{"action":"verify_email","idToken":"<firebase id token>"}
+{"action":"password_reset","email":"<address>"}
+```
+
+Responses implemented by the backend:
+| Status | Body | Meaning |
+| --- | --- | --- |
+| 200 | `{"ok":true,"sent":true,"detail":...}` | verification sent |
+| 200 | `{"ok":true,"alreadyVerified":true,...}` | already verified, nothing sent |
+| 200 | `{"ok":true,"detail":...}` | password reset accepted (uniform) |
+| 429 | `{"ok":true,"limited":true}` | password-reset rate limit (uniform, no account info) |
+| 429 | `{"ok":false,"error":"rate_limited"}` | verification rate limit |
+| 400 | `{"ok":false,"error":"invalid_email"}` / other | malformed request |
+| 401/403 | `{"ok":false,"error":"invalid_token"}` | token not valid |
+| 413 | `{"ok":false,"error":"request_too_large"}` | payload too large |
+| 502 | `{"ok":false,"error":"upstream_unavailable"|"delivery_failed"}` | sending failed |
+| 503 | `{"ok":false,"error":"auth_mail_not_configured"}` | service account / sender / mailer not configured |
+
+Backend prerequisites (owner): `SANGASO_FB_SA_JSON` or `SANGASO_FB_SA_PATH`
+(service account), `SANGASO_CONTACT_EMAIL` (sender), `SANGASO_SITE_URL`
+(continueUrl base, defaults to sangaso.com). The backend delivers through
+the host mailer `mail()`; no transactional provider is configured yet.
+The backend also enforces a same-origin guard: browsers must send a
+matching `Origin` (mobile builds send none, which the backend accepts).
+
+### App call sites updated
+- NEW `lib/src/services/auth_email_service.dart` — `AuthEmailService`
+  (transport seam `AuthEmailTransport`, production `HttpAuthEmailTransport`),
+  `AuthEmailOutcome`, `AuthEmailResult`, `AuthEmailException`, plus the
+  compile-time switch `SANGASO_AUTH_MAIL_CUSTOM` and endpoint override
+  `SANGASO_AUTH_MAIL_ENDPOINT`.
+- `lib/src/services/email_verification_service.dart` — resend now uses the
+  branded endpoint when the switch is on; exactly one request, no Firebase
+  fallback after a failed custom request.
+- `lib/src/services/auth_service.dart` — `resetPassword()` uses the branded
+  endpoint when the switch is on; the backend's uniform answers (sent and
+  rate-limited) both map to the same neutral confirmation, so the UI never
+  discloses whether an account exists.
+- `lib/src/services/auth_errors.dart` — new truthful messages for the
+  branded failure modes (rate limit, unavailable, invalid request).
+- `lib/main.dart` — constructs `AuthEmailService` and injects it into
+  `FirebaseAuthService` and `FirebaseAuthEmailVerificationService`;
+  provided via Provider.
+- `pubspec.yaml` — added `http: ^1.2.2` (runtime) and
+  `mock_exceptions: ^0.8.2` (dev only, for the transport-selection test).
+
+### How the integration is gated
+`SANGASO_AUTH_MAIL_CUSTOM=1` at build time. Default is OFF, so every
+current build keeps using Firebase's default email sender. Nothing in the
+app changes behaviour until a build explicitly opts in, and the switch is
+meant to be enabled only in a build that targets a deployed, configured
+and verified endpoint. No secret is embedded: verification requests carry
+the user's own Firebase ID token (the backend proves ownership), password
+resets rely on the backend's IP/address rate limiting.
+
+### Focused checks actually performed
+- `flutter test test/services/auth_email_service_test.dart` (15 tests) —
+  request construction, response mapping (200 sent, 200 alreadyVerified,
+  400/401/413 invalid, 429 rate limit, 502/503 unavailable, transport
+  failure), no request while the switch is off, no email/idToken leakage
+  in the wrong request shape, privacy-safe user messages.
+- `flutter test test/services/auth_email_transport_test.dart` (3 tests) —
+  switch off keeps Firebase as sender; switch on calls the backend exactly
+  once and never Firebase; a failed custom request does NOT fall back to
+  Firebase (no duplicate email).
+- `flutter test test/screens/login_screen_test.dart` (8 tests, incl. 1 new)
+  — the branded reset failure message never says the account is unknown.
+- `flutter test test/screens/verify_email_screen_test.dart` and
+  `test/lifecycle_test.dart` — unchanged behaviour confirmed.
+- `flutter analyze` — 0 errors, 0 warnings.
+- No email was sent and no request was made to the production endpoint
+  during this work (all traffic went through the fake transport).
+
+### Custom delivery status
+DISABLED and UNVERIFIED. Branded delivery is only real once the website
+session deploys `api/auth-mail.php`, the service account and sender are
+configured in cPanel, the mail transport actually delivers, and an
+authorized test inbox receives a working branded email. Until then the
+shipped app continues to use Firebase's default sender.
+
+### Remaining dependencies and next owner actions
+1. Website session: deploy the candidate (owner cPanel session), set
+   `SANGASO_FB_SA_JSON`/`SANGASO_FB_SA_PATH`, `SANGASO_CONTACT_EMAIL`,
+   `SANGASO_SITE_URL`; confirm the mailer is configured for the domain.
+2. Verify one branded verification email AND one branded password-reset
+   email arrive in an authorized inbox and that their action links work.
+3. Then produce the next release: bump versionCode above 6, build with
+   `--dart-define=SANGASO_AUTH_MAIL_CUSTOM=1`, verify the new AAB's
+   SHA-256/signature, and update the release reports. The current
+   1.0.3+6 artifact (SHA 51d3b662a...) stays preserved and is NOT
+   rebuilt by this integration.
+4. Firebase Console: authorized domains and the email action URL must stay
+   on the deployed `https://sangaso.com/auth-action.php` (unchanged).
