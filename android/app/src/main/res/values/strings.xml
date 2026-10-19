@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        OAuth client used by the google_sign_in plugin on Android.
+        The plugin resolves R.string.default_web_client_id at runtime
+        (GoogleSignInPlugin.java) because the app does not use the
+        Google Services Gradle plugin / google-services.json.
+        This is a public OAuth client id (it ships inside every build),
+        not a secret. The Firebase-side OAuth client is bound to the
+        package name com.sangaso.app and to the registered SHA-1
+        certificate fingerprints.
+    -->
+    <string name="default_web_client_id" translatable="false">445535100693-r4q7ns9ra7gaf43gc9i79ha1clldmtvc.apps.googleusercontent.com</string>
+</resources>
