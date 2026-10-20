@@ -328,3 +328,77 @@ Signing SHA-1 is server-side only. A new version is justified only for a
 concrete requirement: enabling the branded auth-email transport (after the
 website backend is deployed, configured and a real branded email is
 received) or a specific code fix.
+
+---
+
+## 12. P0 authentication incident - diagnosis and fix (2026-10-20)
+
+### Diagnosis (evidence, not guesswork)
+- Non-mutating Identity Toolkit probes with the shipped keys returned
+  `INVALID_EMAIL` (bad email) and `INVALID_LOGIN_CREDENTIALS` (sign-in with
+  a non-existent address): the API is ENABLED, both API keys are valid and
+  unrestricted, and the Email/Password provider is ENABLED
+  (`OPERATION_NOT_ALLOWED` would appear if it were disabled). The Firebase
+  backend is healthy for email auth - the email failures are client-side.
+- Root cause of Google sign-in failure (confirmed source defect): commit
+  22a8713 put the ANDROID OAuth client id
+  (`445535100693-r4q7ns9ra7gaf43gc9i79ha1clldmtvc...`) into
+  `strings.xml` as `default_web_client_id`. google_sign_in_android 6.2.1
+  (GoogleSignInPlugin.java:240-246) reads that resource and uses it as
+  serverClientId / requestIdToken - which must be a WEB APPLICATION
+  client. A mismatched client type makes the picker fail with
+  DEVELOPER_ERROR (ApiException 10, PlatformException), which is NOT a
+  FirebaseAuthException, so friendlyAuthError returned the generic
+  "Something went wrong. Please try again shortly." toast.
+- The same generic toast for email paths means a non-FirebaseAuthException
+  was thrown client-side; the code had zero diagnostic logging, so the
+  exact device-side cause cannot yet be named. Safe logging was added.
+
+### Changes (commit ce05544)
+- `android/app/src/main/res/values/strings.xml`: default_web_client_id now
+  carries the project's WEB client id
+  `445535100693-nv9j7f6cfsn475r4hobanparifsc73it.apps.googleusercontent.com`
+  (the id shown on the Firebase Google provider page), with a comment
+  documenting that the resource must be a Web application client.
+- `lib/src/services/auth_errors.dart`: `friendlyAuthError` gained an
+  `operation` label and `_logAuthDiagnosis` - writes
+  `SANGASO_AUTH_DIAG op=<op> id=<ms> type=<ExceptionType> code=<code>` to
+  logcat (flutter tag). Never logs passwords, tokens, messages or emails.
+- Call sites updated with operation labels: login_screen
+  (email_sign_in / google_sign_in / password_reset), signup_screen
+  (email_sign_up / google_sign_up), verify_email_screen (verify_email).
+- Removed two unused imports flagged by the analyzer (login_screen,
+  auth_email_transport_test).
+- Tests: expanded `test/services/auth_errors_test.dart` with regression
+  tests for PlatformException(DEVELOPER_ERROR) -> generic safe message and
+  for the operation label not changing user-facing text. 25 focused auth
+  tests pass; analyze: 0 errors / 0 warnings.
+- pubspec.yaml: version 1.0.3+8.
+
+### New artifact (built by CI, verified)
+- `app/artifacts/app-release-1.0.3+8.aab`
+  SHA-256 `2580d18910fae6d05f533ba81af61f583e5dc4b4f13a08d80c88a7384e7c8448`
+  (47,046,628 B). CI run 39434591850, head ce05544, conclusion success.
+- Verified: versionCode 8 / versionName 1.0.3 / package com.sangaso.app;
+  embeds the NEW web client id in base/resources.pb and NOT the old one;
+  contains the SANGASO_AUTH_DIAG logging; signed with the unchanged upload
+  key (SHA1 1D:2F:AB:F4:74:09:37:21:D7:80:39:A9:71:FE:08:F5:68:37:F7:68).
+- Preserved: app-release.aab (1.0.3+7), app-release-1.0.3+6.aab,
+  app-release-1.0.3+8.aab.
+
+### Owner Firebase/Google Cloud checks still needed
+1. Google Cloud Console -> APIs & Services -> Credentials: confirm
+   `445535100693-nv9j7f6cfsn475r4hobanparifsc73it...` exists as a WEB
+   APPLICATION client, and that ANDROID clients exist for package
+   com.sangaso.app bound to the Play App Signing SHA-1 (from Play Console
+   -> App integrity), not only the upload key
+   SHA1 1D:2F:AB:F4:74:09:37:21:D7:80:39:A9:71:FE:08:F5:68:37:F7:68.
+   Upload-key fingerprints only help sideloaded builds; Play-installed
+   builds are signed by the Play App Signing key.
+2. Confirm no versionCode 8 (or higher) was ever uploaded to any Play
+   track before publishing the new candidate.
+3. After the next release: repro a failing email sign-in, run a logcat
+   session (adb logcat -s flutter) and report the full
+   SANGASO_AUTH_DIAG line plus the toast text so the client-side email
+   failure can be named exactly.
+
