@@ -402,3 +402,43 @@ received) or a specific code fix.
    SANGASO_AUTH_DIAG line plus the toast text so the client-side email
    failure can be named exactly.
 
+
+---
+
+## 13. On-device reproduction of the P0 auth incident (2026-10-20)
+
+Device: Xiaomi M2007J22G (product cannong_global), Android 12 / SDK 31 /
+MIUI 14, adb serial mjtkzp7h49onqkz5, authorized. Google Play services
+present. com.sangaso.app was NOT preinstalled - no Play-signed package on
+this device, hence no signature conflict at any point.
+
+Tests (owner executed, logs captured into ignored diagnostics/):
+1. Debug APK from current source (contains ce05544 fixes):
+   email sign-in SUCCESS, Google sign-in SUCCESS (picker + completion),
+   Google picker cancellation CLEAN.
+2. Signed release candidate 1.0.3+8 installed via bundletool
+   --connected-device (local sideload, debug-keystore-signed split APKs;
+   exact release code/resources, no Play involvement): email sign-in
+   SUCCESS, Google sign-in SUCCESS. No SANGASO_AUTH_DIAG lines and no
+   Firebase/Platform/ApiException entries in the flutter logcat for any
+   failing test (none failed).
+
+Interpretation:
+- The reported failures do NOT reproduce from current source on this
+  device in either debug or release AOT mode.
+- The +7 Google failure root cause stands (Android-type client id used as
+  serverClientId -> DEVELOPER_ERROR); ce05544 fixed it and the on-device
+  Google flow now completes.
+- The reported email failures are not reproducible backend-side (probes)
+  nor on this device; remaining explanations are device-specific GMS
+  issues on the original failing device, or a paraphrased error message.
+  If it recurs on the Play build, the SANGASO_AUTH_DIAG logcat line will
+  identify the operation, exception type and safe error code.
+
+Still owner-gated for PLAY-installed builds:
+- This sideloaded +8 candidate is signed locally (debug keystore). A Play
+  install is signed by the Play App Signing key, so the Play Console ->
+  App integrity SHA-1 must be registered on the com.sangaso.app Firebase
+  registration for Google sign-in on Play installs.
+- Confirm before upload that no versionCode >= 8 exists on any Play track.
+- Local artifacts: diagnostics/ (ignored), $TEMP\opencode\rel8.apks.

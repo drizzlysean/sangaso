@@ -81,3 +81,5 @@ migrate_working_dir/
 
 # Windows symlink workspace
 ~$*
+
+diagnostics/
