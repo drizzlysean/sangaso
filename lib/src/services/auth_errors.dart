@@ -1,11 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 
 import 'auth_email_service.dart';
 
 /// Maps FirebaseAuthException codes to user-friendly messages.
 /// Always falls back to safe, plain-language text; raw exception details
 /// are never shown in the UI and no internals are leaked.
-String friendlyAuthError(Object error) {
+///
+/// [operation] identifies the auth operation (e.g. `email_sign_in`,
+/// `google_sign_in`) and is used ONLY in diagnostic logcat output so a
+/// reported failure can be correlated with the device log.
+String friendlyAuthError(Object error, {String operation = 'auth'}) {
+  _logAuthDiagnosis(error, operation);
   if (error is AuthEmailException) {
     return friendlyAuthEmailError(error.result);
   }
@@ -41,6 +48,29 @@ String friendlyAuthError(Object error) {
     }
   }
   return 'Something went wrong. Please try again shortly.';
+}
+
+/// Safe diagnostic logging for authentication failures.
+///
+/// Writes exception type, Firebase/platform error code, operation label and
+/// a timestamp correlation id to logcat (`flutter` tag). NEVER logs
+/// passwords, ID tokens, OAuth tokens, error messages that could contain
+/// personal email addresses, or any other personal data.
+void _logAuthDiagnosis(Object error, String operation) {
+  final String type;
+  final String code;
+  if (error is FirebaseAuthException) {
+    type = 'FirebaseAuthException';
+    code = error.code;
+  } else if (error is PlatformException) {
+    type = 'PlatformException';
+    code = error.code;
+  } else {
+    type = error.runtimeType.toString();
+    code = '-';
+  }
+  debugPrint('SANGASO_AUTH_DIAG op=$operation id=${DateTime.now().millisecondsSinceEpoch} '
+      'type=$type code=$code');
 }
 
 /// Safe fallback tied to known operation context (unused for now, kept for

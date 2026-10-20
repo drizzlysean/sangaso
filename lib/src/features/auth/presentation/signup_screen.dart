@@ -55,7 +55,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+        SnackBar(content: Text(friendlyAuthError(e, operation: 'google_sign_up')), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -76,7 +76,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+        SnackBar(content: Text(friendlyAuthError(e, operation: 'email_sign_up')), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

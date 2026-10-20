@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+          SnackBar(content: Text(friendlyAuthError(e, operation: 'google_sign_in')), backgroundColor: AppColors.error));
       }
       return;
     }
@@ -73,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) setState(() => _loading = false);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+        SnackBar(content: Text(friendlyAuthError(e, operation: 'email_sign_in')), backgroundColor: AppColors.error));
       return;
     }
     if (mounted) setState(() => _loading = false);
@@ -208,7 +207,7 @@ class _ForgotDialogState extends State<_ForgotDialog> {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reset email sent')));
             }
           } catch (e) {
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyAuthError(e)), backgroundColor: AppColors.error));
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyAuthError(e, operation: 'password_reset')), backgroundColor: AppColors.error));
           } finally { if (mounted) setState(() => _loading = false); }
         },
         child: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Send'),
